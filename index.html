@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Observatório CLDF — atos dos deputados distritais</title>
+<meta name="description" content="Os atos dos 25 deputados distritais titulares, 2023–2026, relidos do registro público da CLDF: proposições, emendas, presença, votações. Dados abertos e reproduzíveis.">
+<link rel="stylesheet" href="observ.css">
+</head>
+<body>
+<header class="topo">
+  <div class="marca">
+    <span class="selo" aria-hidden="true">CL</span>
+    <div>
+      <h1>Observatório CLDF</h1>
+      <p>Atos dos deputados distritais, relidos do registro público</p>
+    </div>
+  </div>
+  <label class="ano">Ano
+    <select id="ano" aria-label="Ano"><option value="2023">2023</option><option value="2024">2024</option><option value="2025" selected>2025</option><option value="2026">2026</option><option value="todos">2023–2026</option></select>
+  </label>
+</header>
+<nav class="abas" role="tablist" aria-label="Seções"><button type="button" role="tab" class="aba" data-aba="visao" aria-selected="false">Visão geral<span class="conta" data-conta="visao"></span></button><button type="button" role="tab" class="aba" data-aba="deputados" aria-selected="false">Deputados<span class="conta" data-conta="deputados"></span></button><button type="button" role="tab" class="aba" data-aba="proposicoes" aria-selected="false">Proposições<span class="conta" data-conta="proposicoes"></span></button><button type="button" role="tab" class="aba" data-aba="emendas" aria-selected="false">Emendas<span class="conta" data-conta="emendas"></span></button><button type="button" role="tab" class="aba" data-aba="presenca" aria-selected="false">Presença<span class="conta" data-conta="presenca"></span></button><button type="button" role="tab" class="aba" data-aba="calendario" aria-selected="false">Calendário<span class="conta" data-conta="calendario"></span></button><button type="button" role="tab" class="aba" data-aba="votacoes" aria-selected="false">Votações<span class="conta" data-conta="votacoes"></span></button><button type="button" role="tab" class="aba" data-aba="fontes" aria-selected="false">Fontes<span class="conta" data-conta="fontes"></span></button></nav>
+<section class="filtros" aria-label="Filtros">
+  <input id="busca" type="search" placeholder="Buscar (ignora acentos)…" aria-label="Buscar">
+  <select id="partido" aria-label="Partido"><option value="">Todos os partidos</option></select>
+  <div id="chips" class="chips" role="group" aria-label="Marcadores"></div>
+  <button type="button" id="limpar" class="leve">Limpar filtros</button>
+</section>
+<main id="painel" tabindex="-1"><p class="aviso">Carregando os dados…</p></main>
+<footer class="rodape">
+  <div class="exportar">
+    <button type="button" id="exportar-csv">Exportar CSV desta visão</button>
+    <button type="button" id="exportar-pdf">Imprimir / salvar PDF</button>
+  </div>
+  <p>Versão 0.52.0 · Todo número desta página é uma contagem ou uma soma em centavos lida de
+  um ato do ledger; toda porcentagem é calculada aqui, no seu navegador, ao lado do numerador e
+  do denominador. Dados: CC BY-SA 4.0 · Código e interface: PolyForm Noncommercial 1.0.0 ·
+  <a href="LICENSE-data">LICENSE-data</a> · <a href="LICENSE">LICENSE</a> ·
+  <a href="README.md">README</a></p>
+</footer>
+<div id="modal" class="modal" hidden>
+  <div class="modal-caixa" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+    <button type="button" class="fechar" id="modal-fechar" aria-label="Fechar">×</button>
+    <div id="modal-corpo"></div>
+  </div>
+</div>
+<noscript><p class="aviso">Esta página precisa de JavaScript para ler os arquivos em
+<code>dados/</code>. Os mesmos números estão nesses arquivos JSON, abertos.</p></noscript>
+<script src="observ.js"></script>
+</body>
+</html>
