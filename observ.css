@@ -110,6 +110,12 @@ padding:10px 14px;margin:10px 0;font-size:14px}
 .rodape{padding:18px clamp(16px,4vw,40px) 28px;border-top:1px solid var(--linha);
 background:var(--cartao);color:var(--suave);font-size:13px}
 .exportar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.detalhe{font:inherit;font-size:12px;border:1px solid var(--linha);background:var(--cartao);
+color:var(--marca);border-radius:999px;padding:3px 11px;cursor:pointer;margin-top:10px}
+.detalhe:hover{border-color:var(--marca)}
+.mini .detalhe,li .detalhe,td .detalhe,p .detalhe{margin:0 0 0 6px;padding:1px 9px;font-size:11px}
+h2 .detalhe{margin:0 0 0 8px;vertical-align:2px}
+.sem-link{color:var(--suave);font-size:12px}
 .modal{position:fixed;inset:0;background:rgba(10,15,30,.55);display:grid;place-items:center;
 z-index:20;padding:16px}
 .modal[hidden]{display:none}
@@ -120,7 +126,7 @@ background:none;color:var(--suave);cursor:pointer}
 .duas{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 @media (max-width:640px){.duas{grid-template-columns:1fr}.linha{grid-template-columns:1fr}
 .linha .lado{text-align:left}}
-@media print{.abas,.filtros,.exportar,.modal,.comparar-barra,.pag,.cartao-dep footer{display:none!important}
+@media print{.abas,.filtros,.exportar,.modal,.comparar-barra,.pag,.detalhe,.cartao-dep footer{display:none!important}
 body{background:#fff;color:#000}.rolagem{max-height:none;overflow:visible;border:0}
 .kpi,.cartao-dep,.linha{box-shadow:none;break-inside:avoid}main{padding:0}
 .topo{border:0;padding:0 0 12px}}

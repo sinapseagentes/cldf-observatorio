@@ -1,0 +1,1 @@
+{"ano":2023,"blocos":[{"colunas":["deputado","data","reunião","comissão","condição"],"fonte":"orgao_reuniao","ligacao":{"campos":[2],"plantilla":"https://ple.cl.df.gov.br/pleservico/api/public/reuniao/{0}","rotulo":"a reunião na API pública"},"linhas":[],"nome":"composição de comissões","publicado":null}],"tipo_ato":10}

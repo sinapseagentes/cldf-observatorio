@@ -15,8 +15,8 @@
     ' soma o <b>líquido</b> da folha: a fonte publica a folha do gabinete sem o bruto' +
     ' (vazio em 229.662 das 229.662 linhas), então o bruto não existe para publicar.</p>';
   var E = {aba: 'visao', ano: null, busca: '', partido: '', chips: {}, pagina: 0,
-    comparar: [], sub: 'plenario', exportavel: null};
-  var D = {meta: null, deputados: null, calendario: null, fontes: null, porAno: {}};
+    comparar: [], sub: 'plenario', exportavel: null, detalhe: null, paginaModal: 0};
+  var D = {meta: null, deputados: null, calendario: null, fontes: null, porAno: {}, atos: {}};
   var $ = function (id) { return document.getElementById(id); };
 
   /* ---------- utilitários ---------- */
@@ -147,9 +147,9 @@
   }
   // val e sub chegam como MARCAÇÃO já montada por inteiro(), reais(), razao(), barra() e esc():
   // quem chama escapa todo texto do ledger antes de passá-lo para cá.
-  function kpi(rot, val, sub) {
+  function kpi(rot, val, sub, acao) {
     return '<div class="kpi"><div class="rot">' + esc(rot) + '</div><div class="val">' + val +
-      '</div><div class="sub">' + (sub || '') + '</div></div>';
+      '</div><div class="sub">' + (sub || '') + '</div>' + (acao || '') + '</div>';
   }
   function nomesDe(indices) {
     return indices.map(function (i) { return D.deputados[i].nome; }).join(', ');
@@ -162,12 +162,185 @@
   /* ---------- modal ---------- */
   var focoAnterior = null;
   function abrirModal(html) {
+    E.detalhe = null; E.paginaModal = 0;
     focoAnterior = document.activeElement;
     $('modal-corpo').innerHTML = html; $('modal').hidden = false; $('modal-fechar').focus();
   }
   function fecharModal() {
-    $('modal').hidden = true; $('modal-corpo').innerHTML = '';
+    $('modal').hidden = true; $('modal-corpo').innerHTML = ''; E.detalhe = null;
     if (focoAnterior && focoAnterior.focus) { focoAnterior.focus(); }
+  }
+
+  /* ---------- Detalhes: as linhas de ato por trás de cada número (OS-144) ----------
+     O botão é a afordância e o número continua sem ser clicável, como o operador pediu:
+     "First. But a button details. Not the number". Cada estilhaço
+     `dados/atos/<tipo>-<ano>.json` só é baixado quando um botão o pede, e fica em cache
+     enquanto a visita durar — `deputados.json`, que toda visita baixa, não cresce um byte.
+     As ligações NÃO são montadas aqui: cada bloco traz a sua plantilha do estilhaço, e um
+     bloco sem plantilha utilizável e sem artefato publicado diz "sem link público". */
+  function botaoDetalhe(tipos, rotulo, dep, fonte) {
+    return '<button type="button" class="detalhe" data-detalhe="' + esc(tipos.join(',')) +
+      '" data-rot="' + esc(rotulo) + '"' +
+      (dep === undefined || dep === null ? '' : ' data-dep="' + Number(dep) + '"') +
+      (fonte ? ' data-fonte="' + esc(fonte) + '"' : '') + '>Detalhes</button>';
+  }
+  /* Quatro números da visão geral são POPULAÇÕES, não atos dos titulares: proposições,
+     sessões plenárias, matérias votadas e folhas de votação. As linhas por trás deles já
+     estão publicadas — nas abas que as listam — e o botão leva o leitor até lá em vez de
+     inventar um recorte que não é o do número. */
+  function botaoIr(aba, rotulo, sub) {
+    return '<button type="button" class="detalhe" data-ir="' + esc(aba) + '"' +
+      (sub ? ' data-ir-sub="' + esc(sub) + '"' : '') + '>' + esc(rotulo) + '</button>';
+  }
+  function carregarAtos(tipo) {
+    return Promise.all(anos().map(function (a) {
+      var k = tipo + '-' + a;
+      if (D.atos[k]) { return D.atos[k]; }
+      return ler('dados/atos/' + k + '.json').then(function (j) { D.atos[k] = j; return j; });
+    }));
+  }
+  function juntarBlocos(estilhacos) {
+    var ordem = [], por = {};
+    estilhacos.forEach(function (j) {
+      j.blocos.forEach(function (b) {
+        var k = j.tipo_ato + '|' + b.fonte;
+        if (!por[k]) {
+          por[k] = {tipo_ato: j.tipo_ato, fonte: b.fonte, nome: b.nome, colunas: b.colunas,
+            ligacao: b.ligacao, publicado: b.publicado, linhas: []};
+          ordem.push(k);
+        }
+        por[k].linhas = por[k].linhas.concat(b.linhas);
+      });
+    });
+    return ordem.map(function (k) { return por[k]; });
+  }
+  function filtrarDetalhe(blocos, s) {
+    var quem = {};
+    if (s.dep === null) { depsFiltrados().forEach(function (d) { quem[d.i] = 1; }); }
+    else { quem[s.dep] = 1; }
+    return blocos.filter(function (b) { return !s.fonte || b.fonte === s.fonte; })
+      .map(function (b) {
+        return {tipo_ato: b.tipo_ato, fonte: b.fonte, nome: b.nome, colunas: b.colunas,
+          ligacao: b.ligacao, publicado: b.publicado,
+          linhas: b.linhas.filter(function (l) { return quem[l[0]] === 1; })};
+      });
+  }
+  function ligar(b, l) {
+    if (b.ligacao) {
+      var v = b.ligacao.campos.map(function (c) { return l[c]; });
+      if (v.every(function (x) { return x !== null && x !== undefined && x !== ''; })) {
+        var u = b.ligacao.plantilla;
+        v.forEach(function (x, k) { u = u.split('{' + k + '}').join(encodeURIComponent(x)); });
+        return '<a rel="noopener noreferrer" target="_blank" href="' + esc(u) + '">' +
+          esc(b.ligacao.rotulo) + '</a>';
+      }
+    }
+    if (b.publicado) {
+      return '<a rel="noopener noreferrer" target="_blank" href="' + esc(b.publicado.url) +
+        '">' + esc(b.publicado.rotulo) + '</a>';
+    }
+    return '<span class="sem-link">sem link público</span>';
+  }
+  var ROTULO_DE_COLUNA = {valor_centavos: 'valor', lei_centavos: 'em lei',
+    empenhado_centavos: 'empenhado'};
+  function ehDinheiro(c) { return c.slice(-9) === '_centavos'; }
+  function secaoDetalhe(b, corte) {
+    var soma = {}, temSoma = [];
+    b.colunas.forEach(function (c, i) {
+      if (!ehDinheiro(c)) { return; }
+      soma[i] = 0; temSoma.push(i);
+      b.linhas.forEach(function (l) { soma[i] += l[i] || 0; });
+    });
+    var h = '<h2>' + esc(b.nome) + ' — ' + inteiro(b.linhas.length) + '</h2>';
+    if (b.publicado) {
+      h += '<p class="nota">Arquivo ou painel publicado: <a rel="noopener noreferrer" ' +
+        'target="_blank" href="' + esc(b.publicado.url) + '">' + esc(b.publicado.rotulo) +
+        '</a> · consulta gravada em <code>' + esc(b.publicado.consulta) + '</code></p>';
+    }
+    h += '<div class="rolagem"><table><thead><tr>' + b.colunas.map(function (c, i) {
+      return '<th' + (ehDinheiro(c) ? ' class="num"' : '') + '>' +
+        esc(ROTULO_DE_COLUNA[c] || c) + '</th>'; }).join('') +
+      '<th>ligação</th></tr></thead><tbody>' + corte.map(function (l) {
+        return '<tr>' + b.colunas.map(function (c, i) {
+          var v = l[i];
+          if (i === 0) { return '<td>' + esc(D.deputados[v].nome) + '</td>'; }
+          if (i === 1) { return '<td>' + esc(dataBr(v)) + '</td>'; }
+          if (ehDinheiro(c)) { return '<td class="num">' + reais(v) + '</td>'; }
+          if (v === null || v === undefined || v === '') {
+            return '<td class="sem-link">n/d</td>';
+          }
+          return '<td' + (typeof v === 'number' ? ' class="num"' : '') + '>' + esc(v) + '</td>';
+        }).join('') + '<td>' + ligar(b, l) + '</td></tr>'; }).join('') + '</tbody></table></div>';
+    if (temSoma.length) {
+      h += '<p class="nota">Soma destas ' + inteiro(b.linhas.length) + ' linhas: ' +
+        temSoma.map(function (i) {
+          return esc(ROTULO_DE_COLUNA[b.colunas[i]] || b.colunas[i]) + ' ' +
+            reaisInteiros(soma[i]);
+        }).join(' · ') + '. Truncada para exibição como em toda a página; as linhas acima ' +
+        'trazem os centavos.</p>';
+    }
+    return h;
+  }
+  /* Uma paginação só, atravessando os blocos: o tipo 4 tem dois (plenário e comissão) e o
+     tipo 6 tem dois (painel e créditos adicionais), e dois paginadores na mesma janela
+     seriam dois recortes que o leitor teria de casar de cabeça. */
+  function htmlDetalhe(s, estilhacos) {
+    var blocos = filtrarDetalhe(juntarBlocos(estilhacos), s);
+    var total = 0; blocos.forEach(function (b) { total += b.linhas.length; });
+    var paginas = Math.max(1, Math.ceil(total / POR_PAGINA));
+    if (E.paginaModal >= paginas) { E.paginaModal = 0; }
+    var ini = E.paginaModal * POR_PAGINA, fim = ini + POR_PAGINA, visto = 0;
+    var h = '<h3 id="modal-titulo">' + esc(s.rotulo) + '</h3><p class="nota">' + inteiro(total) +
+      (total === 1 ? ' ato' : ' atos') + ' · ' + esc(rotuloAno()) + ' · ' +
+      (s.dep === null ? inteiro(depsFiltrados().length) + ' de ' +
+        inteiro(D.deputados.length) + ' titulares' : esc(D.deputados[s.dep].nome)) +
+      '. Cada linha liga ao artefato público mais fino que a fonte expõe.' +
+      (s.dep === null ? '' : '<button type="button" class="detalhe" data-perfil="' +
+        Number(s.dep) + '">← voltar ao perfil</button>') + '</p>';
+    if (!total) { return h + '<p class="aviso">Nenhum ato neste recorte.</p>'; }
+    var geral = {}, ordemGeral = [];
+    blocos.forEach(function (b) {
+      b.colunas.forEach(function (c, i) {
+        if (!ehDinheiro(c)) { return; }
+        if (geral[c] === undefined) { geral[c] = 0; ordemGeral.push(c); }
+        b.linhas.forEach(function (l) { geral[c] += l[i] || 0; });
+      });
+    });
+    if (ordemGeral.length && blocos.length > 1) {
+      h += '<p class="nota">Somando os ' + inteiro(blocos.length) + ' blocos: ' +
+        ordemGeral.map(function (c) {
+          return esc(ROTULO_DE_COLUNA[c] || c) + ' ' + reaisInteiros(geral[c]);
+        }).join(' · ') + '. É este o total que o número de onde este botão saiu mostra.</p>';
+    }
+    blocos.forEach(function (b) {
+      var a = Math.max(0, ini - visto), z = Math.min(b.linhas.length, fim - visto);
+      visto += b.linhas.length;
+      if (z > a) { h += secaoDetalhe(b, b.linhas.slice(a, z)); }
+    });
+    return h + '<div class="pag"><button type="button" data-pagm="-1"' +
+      (E.paginaModal === 0 ? ' disabled' : '') + '>← anterior</button><span>' +
+      inteiro(ini + 1) + '–' + inteiro(Math.min(fim, total)) + ' de ' + inteiro(total) +
+      '</span><button type="button" data-pagm="1"' +
+      (E.paginaModal >= paginas - 1 ? ' disabled' : '') + '>próxima →</button></div>';
+  }
+  function abrirDetalhe(s) {
+    abrirModal('<p class="aviso">Carregando as linhas deste número…</p>');
+    E.detalhe = s; E.paginaModal = 0;
+    desenharDetalhe();
+  }
+  function desenharDetalhe() {
+    var s = E.detalhe;
+    if (!s) { return; }
+    Promise.all(s.tipos.map(carregarAtos)).then(function (grupos) {
+      if (E.detalhe !== s) { return; }
+      $('modal-corpo').innerHTML = htmlDetalhe(s, [].concat.apply([], grupos));
+    }).catch(function (e) {
+      $('modal-corpo').innerHTML = '<p class="aviso">Não foi possível ler o detalhe: ' +
+        esc(e.message) + '</p>';
+    });
+  }
+  function tiposDoLedger() {
+    return D.meta.tipos_ato.map(function (t) { return t.tipo_ato; });
   }
 
   /* ---------- Visão geral ---------- */
@@ -183,23 +356,36 @@
       return [d, n];
     });
     var h = '<div class="kpis">' +
-      kpi('Atos dos titulares', inteiro(soma(tit)), razao(soma(tit), soma(led)) + ' dos atos do ledger no período') +
-      kpi('Proposições', inteiro(metaSoma('proposicoes')), 'com ao menos um titular entre os autores') +
-      kpi('Emendas ao orçamento', inteiro(em.n), reais(em.valor_centavos) + ' somados') +
-      kpi('Empenhado das emendas', reais(em.empenhado_centavos), 'de ' + reais(em.lei_centavos) + ' em lei (painel de emendas)') +
+      kpi('Atos dos titulares', inteiro(soma(tit)), razao(soma(tit), soma(led)) + ' dos atos do ledger no período',
+        botaoDetalhe(tiposDoLedger(), 'Atos dos titulares')) +
+      kpi('Proposições', inteiro(metaSoma('proposicoes')), 'com ao menos um titular entre os autores',
+        botaoIr('proposicoes', 'Ver as proposições')) +
+      kpi('Emendas ao orçamento', inteiro(em.n), reais(em.valor_centavos) + ' somados',
+        botaoDetalhe([6], 'Emendas ao orçamento')) +
+      kpi('Empenhado das emendas', reais(em.empenhado_centavos), 'de ' + reais(em.lei_centavos) + ' em lei (painel de emendas)',
+        botaoDetalhe([6], 'Emendas ao orçamento — em lei e empenhado')) +
       kpi('Sessões plenárias', inteiro(soma(sess)), Object.keys(sess).sort().map(function (k) {
-        return esc(k.toLowerCase()) + ' ' + inteiro(sess[k]); }).join(' · ')) +
-      kpi('Presenças registradas', razao(pres, poss), 'presenças sobre sessões possíveis' + barra(pres, poss)) +
-      kpi('Matérias votadas em plenário', inteiro(metaSoma('materias_plenario')), 'votação nominal') +
-      kpi('Folhas de votação em comissão', inteiro(metaSoma('folhas_comissao')), 'com ao menos uma marca lida') +
+        return esc(k.toLowerCase()) + ' ' + inteiro(sess[k]); }).join(' · '),
+        botaoIr('presenca', 'Ver as sessões')) +
+      kpi('Presenças registradas', razao(pres, poss), 'presenças sobre sessões possíveis' + barra(pres, poss),
+        botaoDetalhe([5], 'Presenças registradas')) +
+      kpi('Matérias votadas em plenário', inteiro(metaSoma('materias_plenario')), 'votação nominal',
+        botaoIr('votacoes', 'Ver as matérias', 'plenario')) +
+      kpi('Folhas de votação em comissão', inteiro(metaSoma('folhas_comissao')), 'com ao menos uma marca lida',
+        botaoIr('votacoes', 'Ver as folhas', 'comissao')) +
       '</div>';
     h += '<h2>Atos por tipo</h2><div class="rolagem"><table class="tipos"><thead><tr><th>Tipo</th>' +
-      '<th>Ato</th><th class="num">Titulares</th><th class="num">Ledger</th></tr></thead><tbody>';
+      '<th>Ato</th><th class="num">Titulares</th><th class="num">Ledger</th><th>Detalhe</th>' +
+      '</tr></thead><tbody>';
     D.meta.tipos_ato.forEach(function (t) {
       var k = String(t.tipo_ato), fora = t.atos === 0;
+      // O botão abre a coluna TITULARES, que é o recorte desta página; a coluna Ledger
+      // conta os atos de qualquer autor e não tem linha publicada aqui.
       h += '<tr' + (fora ? ' class="fora"' : '') + '><td>' + t.tipo_ato + '</td><td>' + esc(t.nome) +
         (fora ? ' — <em>ainda não carregado</em>' : '') + '</td><td class="num">' +
-        inteiro(tit[k] || 0) + '</td><td class="num">' + inteiro(led[k] || 0) + '</td></tr>';
+        inteiro(tit[k] || 0) + '</td><td class="num">' + inteiro(led[k] || 0) + '</td><td>' +
+        (tit[k] ? botaoDetalhe([t.tipo_ato], t.nome) : '<span class="sem-link">—</span>') +
+        '</td></tr>';
     });
     h += '</tbody></table></div><h2>Por deputado</h2>';
     // OS-141 — os quatro tipos que a OS-139 carregou ganham coluna, e os três totais de
@@ -252,11 +438,14 @@
       h += '<article class="cartao-dep"><header><span class="avatar" aria-hidden="true">' +
         esc(iniciais(d.nome)) + '</span><div><h3>' + esc(d.nome) + '</h3><span class="partido">' +
         esc(d.partido || 's/ partido no registro') + '</span></div></header><dl class="mini">' +
-        '<div><dt>Proposições</dt><dd>' + inteiro(n.atos['1'] || 0) + '</dd></div>' +
-        '<div><dt>Presença</dt><dd>' + razao(p, poss) + '</dd></div>' +
-        '<div><dt>Votos em plenário</dt><dd>' + razao(vp, n.materias) + '</dd></div>' +
+        '<div><dt>Proposições</dt><dd>' + inteiro(n.atos['1'] || 0) +
+        botaoDetalhe([1], 'Proposições — ' + d.nome, d.i) + '</dd></div>' +
+        '<div><dt>Presença</dt><dd>' + razao(p, poss) +
+        botaoDetalhe([5], 'Presenças — ' + d.nome, d.i) + '</dd></div>' +
+        '<div><dt>Votos em plenário</dt><dd>' + razao(vp, n.materias) +
+        botaoDetalhe([4], 'Votos em plenário — ' + d.nome, d.i, 'painel_votacao') + '</dd></div>' +
         '<div><dt>Emendas</dt><dd>' + inteiro(n.emendas.n) + ' · ' + reais(n.emendas.valor_centavos) +
-        '</dd></div></dl><footer><button type="button" data-perfil="' + d.i + '">Ver perfil</button>' +
+        botaoDetalhe([6], 'Emendas — ' + d.nome, d.i) + '</dd></div></dl><footer><button type="button" data-perfil="' + d.i + '">Ver perfil</button>' +
         '<label><input type="checkbox" data-comparar="' + d.i + '"' +
         (E.comparar.indexOf(d.i) >= 0 ? ' checked' : '') + '> comparar</label></footer></article>';
     });
@@ -276,11 +465,16 @@
     var h = '<h3>' + esc(d.nome) + ' <span class="partido">' + esc(d.partido || 's/ partido') +
       '</span></h3><div class="kpis">' +
       kpi('Apresentou', inteiro(n.atos['1'] || 0), Object.keys(n.apresentou_por_sigla).sort().map(function (s) {
-        return esc(s) + ' ' + inteiro(n.apresentou_por_sigla[s]); }).join(' · ')) +
-      kpi('Assinou documentos', inteiro(n.atos['2'] || 0), 'ato 2 do ledger') +
-      kpi('Relatou (parecer)', inteiro(n.atos['3'] || 0), 'onde o relator é atribuível') +
-      kpi('Presença', razao(p, poss), barra(p, poss)) + '</div>';
-    h += '<h2>Presença por tipo de sessão</h2><ul>';
+        return esc(s) + ' ' + inteiro(n.apresentou_por_sigla[s]); }).join(' · '),
+        botaoDetalhe([1], 'Proposições apresentadas — ' + d.nome, d.i)) +
+      kpi('Assinou documentos', inteiro(n.atos['2'] || 0), 'ato 2 do ledger',
+        botaoDetalhe([2], 'Documentos assinados — ' + d.nome, d.i)) +
+      kpi('Relatou (parecer)', inteiro(n.atos['3'] || 0), 'onde o relator é atribuível',
+        botaoDetalhe([3], 'Pareceres relatados — ' + d.nome, d.i)) +
+      kpi('Presença', razao(p, poss), barra(p, poss),
+        botaoDetalhe([5], 'Presenças — ' + d.nome, d.i)) + '</div>';
+    h += '<h2>Presença por tipo de sessão' +
+      botaoDetalhe([5], 'Presenças — ' + d.nome, d.i) + '</h2><ul>';
     Object.keys(n.sessoes).sort().forEach(function (t) {
       var pr = n.presencas[t] || 0, tot = pr + (n.sem_presenca[t] || 0);
       h += '<li>' + esc(t.toLowerCase()) + ': ' + razao(pr, tot) + '</li>';
@@ -288,22 +482,32 @@
     h += '</ul><h2>Votos</h2><ul><li>Plenário (nominal): ' +
       ['SIM', 'NAO', 'ABSTENCAO'].map(function (v) {
         return esc(v) + ' ' + inteiro(n.votos_plenario[v] || 0); }).join(' · ') + ' — ' +
-      razao(soma(n.votos_plenario), n.materias) + ' das matérias do período</li><li>Comissão (folha de votação): ' +
+      razao(soma(n.votos_plenario), n.materias) + ' das matérias do período' +
+      botaoDetalhe([4], 'Votos em plenário — ' + d.nome, d.i, 'painel_votacao') +
+      '</li><li>Comissão (folha de votação): ' +
       ['favoravel', 'contrario', 'abstencao'].map(function (v) {
         return esc(v) + ' ' + inteiro(n.votos_comissao[v] || 0); }).join(' · ') +
-      ' · na folha sem marca ' + inteiro(n.votos_comissao.sem_marca || 0) + '</li></ul>';
+      ' · na folha sem marca ' + inteiro(n.votos_comissao.sem_marca || 0) +
+      botaoDetalhe([4], 'Marcas em folha de comissão — ' + d.nome, d.i, 'documento_ativas') +
+      '</li></ul>';
     // OS-141 — o perfil ganha o dinheiro dos atos 7, 8 e 9, com a mesma nota da tabela.
     h += '<h2>Verba, diárias e gabinete</h2><ul><li>Verba indenizatória: ' +
       inteiro(n.atos['7'] || 0) + ' comprovantes · ' + reaisInteiros(n.dinheiro.verba_centavos) +
+      botaoDetalhe([7], 'Verba indenizatória — ' + d.nome, d.i) +
       '</li><li>Diárias: ' + inteiro(n.atos['8'] || 0) + ' · ' +
-      reaisInteiros(n.dinheiro.diaria_centavos) + '</li><li>Gabinete: ' +
+      reaisInteiros(n.dinheiro.diaria_centavos) +
+      botaoDetalhe([8], 'Diárias — ' + d.nome, d.i) + '</li><li>Gabinete: ' +
       inteiro(n.atos['9'] || 0) + ' gabinete-meses · ' +
-      reaisInteiros(n.dinheiro.gabinete_liquido_centavos) + ' líquidos</li><li>Resultado de ' +
-      'proposição: ' + inteiro(n.atos['11'] || 0) + ' atos</li></ul>' + NOTA_DO_DINHEIRO;
-    h += '<h2>Emendas ao orçamento</h2><ul><li>' + inteiro(n.emendas.n) + ' emendas · ' +
+      reaisInteiros(n.dinheiro.gabinete_liquido_centavos) + ' líquidos' +
+      botaoDetalhe([9], 'Custo do gabinete — ' + d.nome, d.i) + '</li><li>Resultado de ' +
+      'proposição: ' + inteiro(n.atos['11'] || 0) + ' atos' +
+      botaoDetalhe([11], 'Resultados obtidos — ' + d.nome, d.i) + '</li></ul>' + NOTA_DO_DINHEIRO;
+    h += '<h2>Emendas ao orçamento' + botaoDetalhe([6], 'Emendas — ' + d.nome, d.i) +
+      '</h2><ul><li>' + inteiro(n.emendas.n) + ' emendas · ' +
       reais(n.emendas.valor_centavos) + ' somados</li><li>Painel de emendas: ' +
       reais(n.emendas.empenhado_centavos) + ' empenhados de ' + reais(n.emendas.lei_centavos) +
-      ' em lei</li></ul><h2>Comissões (reuniões lidas)</h2>';
+      ' em lei</li></ul><h2>Comissões (reuniões lidas)' +
+      botaoDetalhe([10], 'Composição de comissões — ' + d.nome, d.i) + '</h2>';
     h += n.comissoes.length ? '<ul>' + n.comissoes.map(function (c) {
       return '<li>' + c[0] + ' · ' + esc(c[1]) + ' · ' + esc(c[2]) + '</li>'; }).join('') + '</ul>'
       : '<p class="nota">Nenhuma composição lida no período.</p>';
@@ -336,8 +540,9 @@
         return [l[0], l[1], l[3], l[4], l[5], nomesDe(l[6]), l[7], l[8].join(' ')]; })};
     E.lista = linhas;
     return '<p class="nota">' + inteiro(linhas.length) + ' de ' + inteiro(todas.length) +
-      ' proposições. Situação final: <b>n/d</b> — o ato 11 (obteve resultado) ainda não está ' +
-      'carregado no ledger.</p>' + paginar(linhas, function (corte) {
+      ' proposições. A <b>etapa</b> é a registrada na própria proposição; o resultado final é ' +
+      'o ato 11 do ledger, que esta lista não traz por linha.' +
+      botaoDetalhe([11], 'Resultados obtidos') + '</p>' + paginar(linhas, function (corte) {
         return '<div class="lista">' + corte.map(function (l) {
           return '<button type="button" class="linha" data-prop="' + l[0] + '"><span class="sigla">' +
             esc(l[2]) + '</span><span class="corpo"><b>' + esc(l[1]) + '</b><p>' +
@@ -352,7 +557,8 @@
       '</h3><p>' + esc(l[3] || 'sem ementa no registro') + '</p><ul><li>Autores titulares: ' +
       esc(nomesDe(l[6])) + ' — ' + razao(l[6].length, l[7]) + ' dos autores</li><li>Lida em: ' +
       esc(dataBr(l[5])) + '</li><li>Etapa no registro: ' + esc(l[4] || 'n/d') +
-      '</li><li>Situação final: n/d (ato 11 não carregado)</li><li>Regiões citadas: ' +
+      '</li><li>Resultado final: publicado como ato 11 (“obteve resultado”), que esta lista ' +
+      'não traz por linha</li><li>Regiões citadas: ' +
       (l[8].length ? esc(l[8].map(function (r) { return D.meta.regioes[r] || r; }).join('; ')) : 'nenhuma') +
       '</li><li>Identificador na API da CLDF: ' + l[0] + '</li></ul>');
   }
@@ -583,8 +789,12 @@
       '<li>O painel de presença escreve “SESSAO ORDINARIA” até 2024 e “ORDINARIA” desde 2025; ' +
       'aqui as duas grafias são lidas como o mesmo tipo.</li><li>Os arquivos em <code>dados/</code> ' +
       'guardam só contagens e somas em centavos. Toda porcentagem é calculada nesta página, ao lado ' +
-      'dos dois números de que ela sai.</li><li>Situação final das proposições, verba indenizatória, ' +
-      'diárias e custo de gabinete ainda não estão carregados no ledger e não aparecem.</li></ul>';
+      'dos dois números de que ela sai.</li><li>Os onze tipos de ato estão carregados. Cada ' +
+      'número desta página abre, no botão <b>Detalhes</b>, as linhas de ato que o compõem, com ' +
+      'a ligação para o artefato público de cada uma — a proposição, o documento ou a reunião ' +
+      'na API pública, ou o arquivo e o painel publicados. O painel de presença não expõe ' +
+      'endereço por registro, e essas linhas dizem “sem link público” em vez de um endereço ' +
+      'adivinhado.</li></ul>';
     E.exportavel = {nome: 'fontes', colunas: ['tipo_ato', 'nome', 'fonte', 'cobertura', 'atos'],
       linhas: D.fontes.tipos_ato.map(function (t) { return [t.tipo_ato, t.nome, t.fonte, t.cobertura, t.atos]; })};
     return h;
@@ -643,8 +853,8 @@
   /* ---------- eventos ---------- */
   document.addEventListener('click', function (ev) {
     var t = ev.target.closest('[data-aba],[data-grupo],[data-pag],[data-perfil],[data-prop],' +
-      '[data-emenda],[data-sessao],[data-materia],[data-folha],[data-sub],#abrir-comparar,#limpar,' +
-      '#exportar-csv,#exportar-pdf,#modal-fechar');
+      '[data-emenda],[data-sessao],[data-materia],[data-folha],[data-sub],[data-detalhe],' +
+      '[data-pagm],[data-ir],#abrir-comparar,#limpar,#exportar-csv,#exportar-pdf,#modal-fechar');
     if (ev.target === $('modal')) { fecharModal(); return; }
     if (!t) { return; }
     if (t.id === 'modal-fechar') { fecharModal(); }
@@ -667,6 +877,20 @@
     else if (t.hasAttribute('data-sessao')) { detalheSessao(Number(t.getAttribute('data-sessao'))); }
     else if (t.hasAttribute('data-materia')) { detalheMateria(Number(t.getAttribute('data-materia'))); }
     else if (t.hasAttribute('data-folha')) { detalheFolha(Number(t.getAttribute('data-folha'))); }
+    else if (t.hasAttribute('data-detalhe')) {
+      var dp = t.getAttribute('data-dep');
+      abrirDetalhe({tipos: t.getAttribute('data-detalhe').split(',').map(Number),
+        rotulo: t.getAttribute('data-rot') || 'Detalhes',
+        dep: dp === null ? null : Number(dp), fonte: t.getAttribute('data-fonte') || ''});
+    } else if (t.hasAttribute('data-pagm')) {
+      E.paginaModal = Math.max(0, E.paginaModal + Number(t.getAttribute('data-pagm')));
+      desenharDetalhe();
+    } else if (t.hasAttribute('data-ir')) {
+      fecharModal();
+      E.aba = t.getAttribute('data-ir'); E.chips = {};
+      if (t.getAttribute('data-ir-sub')) { E.sub = t.getAttribute('data-ir-sub'); }
+      reiniciar();
+    }
   });
   document.addEventListener('change', function (ev) {
     var t = ev.target;
