@@ -6,6 +6,14 @@
   var MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
   var DIAS = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'];
   var POR_PAGINA = 50;
+  /* OS-141 — a nota que acompanha o dinheiro dos atos 7, 8 e 9. Diz as duas coisas que o
+     leitor não tem como adivinhar da tabela: que os reais na tela estão truncados e o CSV
+     traz centavos, e que o gabinete é o LÍQUIDO porque o bruto não existe na fonte —
+     `folha_pagamento.bruto` está vazio em 229.662 das 229.662 linhas GABINETE (OS-139). */
+  var NOTA_DO_DINHEIRO = '<p class="nota">Dinheiro em reais inteiros, truncado para exibição;' +
+    ' o CSV desta visão exporta centavos inteiros. <b>Gabinete</b> conta gabinete-meses e' +
+    ' soma o <b>líquido</b> da folha: a fonte publica a folha do gabinete sem o bruto' +
+    ' (vazio em 229.662 das 229.662 linhas), então o bruto não existe para publicar.</p>';
   var E = {aba: 'visao', ano: null, busca: '', partido: '', chips: {}, pagina: 0,
     comparar: [], sub: 'plenario', exportavel: null};
   var D = {meta: null, deputados: null, calendario: null, fontes: null, porAno: {}};
@@ -26,6 +34,17 @@
     var neg = centavos < 0, c = Math.abs(centavos);
     var r = Math.floor(c / 100), resto = String(c % 100).padStart(2, '0');
     return (neg ? '−' : '') + 'R$ ' + r.toLocaleString('pt-BR') + ',' + resto;
+  }
+  /* OS-141 — o dinheiro dos atos 7, 8 e 9 pintado em REAIS INTEIROS, escolha do operador
+     ("Counts and totals, gabinete flagged. Truncate centavos"). TRUNCA, nunca arredonda:
+     R$ 3.372.622,29 sai R$ 3.372.622, e o que se perde é sempre menos de um real. É um ato
+     de EXIBIÇÃO e só daqui para a frente — o feed carrega centavos inteiros, o CSV exporta
+     centavos inteiros e o 41c ressoma os centavos pela espinha. Um número truncado no feed
+     divergiria dela. */
+  function reaisInteiros(centavos) {
+    if (centavos === null || centavos === undefined) { return 'n/d'; }
+    var neg = centavos < 0, r = Math.floor(Math.abs(centavos) / 100);
+    return (neg ? '\u2212' : '') + 'R$ ' + r.toLocaleString('pt-BR');
   }
   /* A única divisão desta página. Numerador e denominador ficam no mesmo elemento. */
   function razao(n, d) {
@@ -73,12 +92,14 @@
     var t = {atos: {}, apresentou_por_sigla: {}, votos_plenario: {}, votos_comissao: {},
       presencas: {}, sem_presenca: {}, sessoes: {}, materias: 0, comissoes: [],
       emendas: {n: 0, valor_centavos: 0, lei_centavos: 0, empenhado_centavos: 0,
-        bloqueado_centavos: 0, disponivel_centavos: 0}};
+        bloqueado_centavos: 0, disponivel_centavos: 0},
+      dinheiro: {verba_centavos: 0, diaria_centavos: 0, gabinete_liquido_centavos: 0}};
     anos().forEach(function (a) {
       var c = dep.anos[String(a)], m = D.meta.anos[String(a)];
       ['atos', 'apresentou_por_sigla', 'votos_plenario', 'votos_comissao', 'presencas',
         'sem_presenca'].forEach(function (k) { somaEm(t[k], c[k]); });
       somaEm(t.emendas, c.emendas);
+      somaEm(t.dinheiro, c.dinheiro);
       somaEm(t.sessoes, m.sessoes);
       t.materias += m.materias_plenario;
       c.comissoes.forEach(function (x) { t.comissoes.push([a, x[0], x[1]]); });
@@ -181,26 +202,38 @@
         inteiro(tit[k] || 0) + '</td><td class="num">' + inteiro(led[k] || 0) + '</td></tr>';
     });
     h += '</tbody></table></div><h2>Por deputado</h2>';
+    // OS-141 — os quatro tipos que a OS-139 carregou ganham coluna, e os três totais de
+    // dinheiro com eles. O gabinete diz no próprio cabeçalho que é o LÍQUIDO.
     var cab = ['Deputado', 'Partido', 'Apresentou', 'Assinou', 'Relatou', 'Votou', 'Presenças',
-      'Emendas', 'Emendas (R$)', 'Comissões'];
+      'Emendas', 'Emendas (R$)', 'Verba', 'Verba (R$)', 'Diárias', 'Diárias (R$)',
+      'Gabinete (meses)', 'Gabinete líquido (R$)', 'Resultados', 'Comissões'];
     var corpo = linhas.map(function (x) {
-      var d = x[0], n = x[1];
+      var d = x[0], n = x[1], m = n.dinheiro;
       return [d.nome, d.partido || '', n.atos['1'] || 0, n.atos['2'] || 0, n.atos['3'] || 0,
-        n.atos['4'] || 0, n.atos['5'] || 0, n.emendas.n, n.emendas.valor_centavos, n.atos['10'] || 0];
+        n.atos['4'] || 0, n.atos['5'] || 0, n.emendas.n, n.emendas.valor_centavos,
+        n.atos['7'] || 0, m.verba_centavos, n.atos['8'] || 0, m.diaria_centavos,
+        n.atos['9'] || 0, m.gabinete_liquido_centavos, n.atos['11'] || 0, n.atos['10'] || 0];
     });
-    h += tabela(cab, corpo, [8]);
-    E.exportavel = {nome: 'visao-geral', colunas: cab.slice(0, 8).concat(['emendas_centavos', 'Comissões']), linhas: corpo};
+    h += tabela(cab, corpo, [8], [10, 12, 14]) + NOTA_DO_DINHEIRO;
+    // O CSV carrega CENTAVOS INTEIROS e o cabeçalho diz a unidade de cada célula de
+    // dinheiro: é o artefato conferível, e o truncamento acima é da tela, não do dado.
+    var emCentavos = {8: 'emendas_centavos', 10: 'verba_centavos', 12: 'diaria_centavos',
+      14: 'gabinete_liquido_centavos'};
+    E.exportavel = {nome: 'visao-geral', linhas: corpo,
+      colunas: cab.map(function (c, i) { return emCentavos[i] || c; })};
     return h;
   }
-  function tabela(cab, corpo, colunasDeDinheiro) {
-    var din = colunasDeDinheiro || [];
+  function tabela(cab, corpo, colunasDeDinheiro, colunasTruncadas) {
+    var din = colunasDeDinheiro || [], trunc = colunasTruncadas || [];
     return '<div class="rolagem"><table><thead><tr>' + cab.map(function (c, i) {
       return '<th' + (i > 1 ? ' class="num"' : '') + '>' + esc(c) + '</th>'; }).join('') +
       '</tr></thead><tbody>' + corpo.map(function (l) {
         return '<tr>' + l.map(function (v, i) {
           var num = typeof v === 'number';
+          var pinta = trunc.indexOf(i) >= 0 ? reaisInteiros
+            : (din.indexOf(i) >= 0 ? reais : inteiro);
           return '<td' + (num ? ' class="num"' : '') + '>' +
-            (num ? (din.indexOf(i) >= 0 ? reais(v) : inteiro(v)) : esc(v)) + '</td>';
+            (num ? pinta(v) : esc(v)) + '</td>';
         }).join('') + '</tr>'; }).join('') + '</tbody></table></div>';
   }
 
@@ -259,6 +292,14 @@
       ['favoravel', 'contrario', 'abstencao'].map(function (v) {
         return esc(v) + ' ' + inteiro(n.votos_comissao[v] || 0); }).join(' · ') +
       ' · na folha sem marca ' + inteiro(n.votos_comissao.sem_marca || 0) + '</li></ul>';
+    // OS-141 — o perfil ganha o dinheiro dos atos 7, 8 e 9, com a mesma nota da tabela.
+    h += '<h2>Verba, diárias e gabinete</h2><ul><li>Verba indenizatória: ' +
+      inteiro(n.atos['7'] || 0) + ' comprovantes · ' + reaisInteiros(n.dinheiro.verba_centavos) +
+      '</li><li>Diárias: ' + inteiro(n.atos['8'] || 0) + ' · ' +
+      reaisInteiros(n.dinheiro.diaria_centavos) + '</li><li>Gabinete: ' +
+      inteiro(n.atos['9'] || 0) + ' gabinete-meses · ' +
+      reaisInteiros(n.dinheiro.gabinete_liquido_centavos) + ' líquidos</li><li>Resultado de ' +
+      'proposição: ' + inteiro(n.atos['11'] || 0) + ' atos</li></ul>' + NOTA_DO_DINHEIRO;
     h += '<h2>Emendas ao orçamento</h2><ul><li>' + inteiro(n.emendas.n) + ' emendas · ' +
       reais(n.emendas.valor_centavos) + ' somados</li><li>Painel de emendas: ' +
       reais(n.emendas.empenhado_centavos) + ' empenhados de ' + reais(n.emendas.lei_centavos) +
