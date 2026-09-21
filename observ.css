@@ -124,6 +124,11 @@ max-height:88vh;overflow:auto;padding:24px;position:relative;box-shadow:0 20px 6
 .fechar{position:absolute;top:10px;right:12px;font-size:26px;line-height:1;border:0;
 background:none;color:var(--suave);cursor:pointer}
 .duas{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.form-relatar label{display:block;margin:12px 0;font-size:13px;color:var(--suave)}
+.form-relatar textarea,.form-relatar input[type=email]{width:100%;font:inherit;color:inherit;
+background:var(--cartao);border:1px solid var(--linha);border-radius:10px;padding:8px 10px;
+margin-top:4px;resize:vertical}
+.campo-oculto{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 @media (max-width:640px){.duas{grid-template-columns:1fr}.linha{grid-template-columns:1fr}
 .linha .lado{text-align:left}}
 @media print{.abas,.filtros,.exportar,.modal,.comparar-barra,.pag,.detalhe,.cartao-dep footer{display:none!important}

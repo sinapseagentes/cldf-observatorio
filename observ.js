@@ -817,6 +817,52 @@
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
   }
 
+  /* ---------- relatar (OS-145) ----------
+     Um botão presente em toda aba (fora de #painel, no rodapé) abre um formulário que a
+     PRÓPRIA PÁGINA envia ao Web3Forms — nenhuma sessão deste projeto faz esse POST; é o
+     navegador de quem lê. O campo `estado` carrega o recorte exato que a pessoa via: aba,
+     ano, partido, busca e chips, para que um relato diga a que número ele se refere. */
+  function formularioRelatar() {
+    var estado = JSON.stringify({aba: E.aba, ano: E.ano, partido: E.partido, busca: E.busca,
+      chips: E.chips});
+    return '<h3 id="modal-titulo">Relatar problema ou sugestão</h3>' +
+      '<p class="nota">Sua mensagem é enviada por um serviço de terceiros (Web3Forms) direto ' +
+      'ao operador do projeto; esta página não guarda nem lê o que você escrever.</p>' +
+      '<form id="form-relatar" class="form-relatar">' +
+      '<label for="relatar-mensagem">Mensagem<textarea id="relatar-mensagem" name="message" ' +
+      'required rows="5"></textarea></label>' +
+      '<label for="relatar-email">Seu e-mail (opcional, para resposta)' +
+      '<input id="relatar-email" name="email" type="email"></label>' +
+      '<input type="hidden" name="subject" value="Observatório CLDF — relato ou sugestão">' +
+      '<input type="hidden" name="from_name" value="Observatório CLDF">' +
+      '<input type="hidden" name="estado" value=\'' + esc(estado) + '\'>' +
+      '<input type="checkbox" name="botcheck" class="campo-oculto" tabindex="-1" ' +
+      'autocomplete="off" aria-hidden="true">' +
+      '<p><button type="submit">Enviar</button></p>' +
+      '<p id="relatar-status" class="nota" role="status"></p></form>';
+  }
+  function enviarRelato(form) {
+    var status = $('relatar-status'), botao = form.querySelector('button[type=submit]');
+    if (form.botcheck.checked) { status.textContent = 'Mensagem enviada. Obrigado.'; form.reset(); return; }
+    var corpo = {access_key: window.CHAVE_WEB3FORMS, message: form.message.value,
+      email: form.email.value, subject: form.subject.value, from_name: form.from_name.value,
+      estado: form.estado.value};
+    botao.disabled = true; status.textContent = 'Enviando…';
+    fetch('https://api.web3forms.com/submit', {method: 'POST',
+      headers: {'Content-Type': 'application/json', Accept: 'application/json'},
+      body: JSON.stringify(corpo)})
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        botao.disabled = false;
+        if (j.success) { status.textContent = 'Mensagem enviada. Obrigado.'; form.reset(); }
+        else { status.textContent = 'Não foi possível enviar: ' + (j.message || 'erro desconhecido') + '. Tente novamente.'; }
+      })
+      .catch(function (e) {
+        botao.disabled = false;
+        status.textContent = 'Não foi possível enviar: ' + e.message + '. Tente novamente.';
+      });
+  }
+
   /* ---------- desenhar ---------- */
   function contas() {
     var c = {deputados: D.meta.deputados, proposicoes: metaSoma('proposicoes'),
@@ -854,13 +900,15 @@
   document.addEventListener('click', function (ev) {
     var t = ev.target.closest('[data-aba],[data-grupo],[data-pag],[data-perfil],[data-prop],' +
       '[data-emenda],[data-sessao],[data-materia],[data-folha],[data-sub],[data-detalhe],' +
-      '[data-pagm],[data-ir],#abrir-comparar,#limpar,#exportar-csv,#exportar-pdf,#modal-fechar');
+      '[data-pagm],[data-ir],#abrir-comparar,#abrir-relatar,#limpar,#exportar-csv,#exportar-pdf,' +
+      '#modal-fechar');
     if (ev.target === $('modal')) { fecharModal(); return; }
     if (!t) { return; }
     if (t.id === 'modal-fechar') { fecharModal(); }
     else if (t.id === 'exportar-csv') { exportarCsv(); }
     else if (t.id === 'exportar-pdf') { window.print(); }
     else if (t.id === 'abrir-comparar') { comparar(); }
+    else if (t.id === 'abrir-relatar') { abrirModal(formularioRelatar()); }
     else if (t.id === 'limpar') {
       E.busca = ''; E.partido = ''; E.chips = {}; $('busca').value = ''; $('partido').value = ''; reiniciar();
     } else if (t.hasAttribute('data-aba')) { E.aba = t.getAttribute('data-aba'); E.chips = {}; reiniciar(); }
@@ -891,6 +939,9 @@
       if (t.getAttribute('data-ir-sub')) { E.sub = t.getAttribute('data-ir-sub'); }
       reiniciar();
     }
+  });
+  document.addEventListener('submit', function (ev) {
+    if (ev.target && ev.target.id === 'form-relatar') { ev.preventDefault(); enviarRelato(ev.target); }
   });
   document.addEventListener('change', function (ev) {
     var t = ev.target;
