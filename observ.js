@@ -114,10 +114,8 @@
     return t;
   }
   function depsFiltrados() {
-    var q = semAcento(E.busca);
     return D.deputados.filter(function (d) {
-      if (E.partido && d.partido !== E.partido) { return false; }
-      return !q || semAcento(d.nome + ' ' + (d.partido || '')).indexOf(q) >= 0;
+      return !E.partido || d.partido === E.partido;
     });
   }
 
@@ -527,10 +525,9 @@
   /* ---------- Proposições ---------- */
   function proposicoes(feeds) {
     var todas = []; feeds.forEach(function (f) { todas = todas.concat(f.linhas); });
-    var q = semAcento(E.busca), sigla = E.chips.sigla || '';
+    var sigla = E.chips.sigla || '';
     var base = todas.filter(function (l) {
-      if (!passaPartido(l[6])) { return false; }
-      return !q || semAcento(l[1] + ' ' + (l[3] || '') + ' ' + nomesDe(l[6])).indexOf(q) >= 0;
+      return passaPartido(l[6]);
     });
     chips('sigla', contar(base, function (l) { return l[2]; }));
     var linhas = sigla ? base.filter(function (l) { return l[2] === sigla; }) : base;
@@ -567,10 +564,9 @@
   function estadoEmenda(l) { return l[6] || l[5] || 'n/d'; }
   function emendas(feeds) {
     var todas = []; feeds.forEach(function (f) { todas = todas.concat(f.linhas); });
-    var q = semAcento(E.busca), st = E.chips.estado || '';
+    var st = E.chips.estado || '';
     var base = todas.filter(function (l) {
-      if (!passaPartido([l[3]])) { return false; }
-      return !q || semAcento(l[0] + ' ' + (l[2] || '') + ' ' + D.deputados[l[3]].nome).indexOf(q) >= 0;
+      return passaPartido([l[3]]);
     });
     chips('estado', contar(base, estadoEmenda));
     var linhas = st ? base.filter(function (l) { return estadoEmenda(l) === st; }) : base;
@@ -704,7 +700,7 @@
   function votacoes(feeds) {
     var plen = [], com = [];
     feeds.forEach(function (f) { plen = plen.concat(f.plenario); com = com.concat(f.comissao); });
-    var q = semAcento(E.busca), deps = depsFiltrados(), h = '';
+    var deps = depsFiltrados(), h = '';
     var sub = E.sub;
     h += '<div class="chips" style="margin-bottom:10px"><button type="button" class="chip" data-sub="plenario" aria-pressed="' +
       (sub === 'plenario') + '">Plenário<small>' + inteiro(plen.length) + '</small></button>' +
@@ -713,8 +709,7 @@
     if (sub === 'plenario') {
       chips('', []);
       var linhas = plen.filter(function (m) {
-        if (!passaPartido(m[4].map(function (x) { return x[0]; }))) { return false; }
-        return !q || semAcento(m[2]).indexOf(q) >= 0; });
+        return passaPartido(m[4].map(function (x) { return x[0]; })); });
       E.lista = linhas;
       h += '<div class="legenda"><span style="--c:var(--sim)">Sim</span><span style="--c:var(--nao)">Não</span>' +
         '<span style="--c:var(--abst)">Abstenção</span><span style="--c:var(--nada)">sem voto registrado</span></div>';
@@ -736,8 +731,7 @@
     } else {
       var sigla = E.chips.comissao || '';
       var base = com.filter(function (f) {
-        if (!passaPartido(f[5].map(function (x) { return x[0]; }))) { return false; }
-        return !q || semAcento((f[4] || '') + ' ' + (f[2] || '')).indexOf(q) >= 0; });
+        return passaPartido(f[5].map(function (x) { return x[0]; })); });
       chips('comissao', contar(base, function (f) { return f[2] || 's/ sigla'; }));
       var lc = sigla ? base.filter(function (f) { return (f[2] || 's/ sigla') === sigla; }) : base;
       E.lista = lc;
@@ -875,7 +869,157 @@
     });
   }
   var desenho = 0;
+  
+  var _buscaCache = {};
+  var STOPWORDS = {"2020":1,"284":1,"70094902":1,"andar":1,"assinado":1,"ato":1,"autenticidade":1,"brasilia":1,"camara":1,"cep":1,"codigo":1,"conferida":1,"conforme":1,"crc":1,"diario":1,"distrito":1,"documento":1,"eletronicamente":1,"federal":1,"gov":1,"https":1,"legislativa":1,"lote":1,"matr":1,"municipal":1,"ple":1,"pode":1,"por":1,"praca":1,"presidente":1,"publicado":1,"quadra":1,"sala":1,"secretaria":1,"ser":1,"site":1,"tel":1,"terceira":1,"verificador":1,"vice":1,"www":1};
+  function hashPrefix(token) {
+    var h = 0;
+    var t = token.substring(0, 3);
+    for (var i = 0; i < t.length; i++) {
+      h = (h * 31 + t.charCodeAt(i)) >>> 0;
+    }
+    return h % 200;
+  }
+  function desenharBusca(q) {
+    var painel = $('painel');
+    painel.innerHTML = '<p class="aviso">Buscando...</p>';
+    /* semAcento(), not toLowerCase(): indice.tokenize() unaccents before matching
+       [a-z0-9]{3,}, so the index stores `votacao`. Searching the raw string looks for
+       `vota`, which only ever matches as a trailing PREFIX — a non-final accented term
+       missed every posting and the page said `Nada encontrado`. The two tokenizers are
+       proven equal by the node driver in tests/test_observ.py. */
+    var brutos = semAcento(q).split(/[^a-z0-9]+/).filter(function (x) { return x; });
+    var comuns = brutos.filter(function (x) { return x.length >= 3 && STOPWORDS[x]; });
+    var curtos = brutos.filter(function (x) { return x.length < 3; });
+    var tokens = brutos.filter(function (x) { return x.length >= 3 && !STOPWORDS[x]; });
+    /* A term the index dropped is a FACT ABOUT THE SOURCE, and the quality-signal
+       register's own rule is that such a fact is never allowed to look like an error.
+       So it is named, here and beside the results below — never silently folded into
+       "nada encontrado". blocked/OS-146.decision.md, the paragraph on "distrito federal". */
+    if (tokens.length === 0) {
+      var motivo = '';
+      if (comuns.length) {
+        motivo += '<strong>' + esc(comuns.join(', ')) + '</strong> ' +
+          (comuns.length > 1 ? 'aparecem' : 'aparece') +
+          ' em mais de 90% dos documentos publicados, e por isso não ' +
+          (comuns.length > 1 ? 'entram' : 'entra') + ' no índice. ';
+      }
+      if (curtos.length) {
+        motivo += '<strong>' + esc(curtos.join(', ')) + '</strong> ' +
+          (curtos.length > 1 ? 'têm' : 'tem') + ' menos de três letras. ';
+      }
+      painel.innerHTML = '<p class="aviso">' + (motivo
+        ? motivo + 'Acrescente um termo mais específico.'
+        : 'Nenhum termo válido para busca.') + '</p>';
+      return;
+    }
+    var nota = comuns.length
+      ? '<p class="nota">Termos ignorados por aparecerem em mais de 90% dos documentos: ' +
+        esc(comuns.join(', ')) + '.</p>'
+      : '';
+    var prefix = tokens[tokens.length - 1];
+    var promises = tokens.map(function(t) {
+      var h = hashPrefix(t);
+      if (_buscaCache[h]) return Promise.resolve([t, _buscaCache[h]]);
+      return ler('dados/indice/idx-' + h + '.json').then(function(d) {
+        _buscaCache[h] = d; return [t, d];
+      }).catch(function() { return [t, {}]; });
+    });
+    Promise.all(promises).then(function(res) {
+      var lists = [];
+      for (var i = 0; i < res.length; i++) {
+        var t = res[i][0];
+        var shard = res[i][1];
+        var match = [];
+        if (i === res.length - 1) { // prefix match
+          for (var k in shard) {
+            if (k.indexOf(t) === 0) { match = match.concat(shard[k]); }
+          }
+        } else {
+          match = shard[t] || [];
+        }
+        lists.push(match);
+      }
+      var intersect = lists[0];
+      for (var i = 1; i < lists.length; i++) {
+        var set2 = new Set(lists[i]);
+        intersect = intersect.filter(function(x) { return set2.has(x); });
+      }
+      if (intersect.length === 0) {
+        painel.innerHTML = nota + '<p class="aviso">Nada encontrado.</p>';
+        return;
+      }
+      // fetch body shards
+      var bshards = {};
+      intersect.forEach(function(doc_id) {
+        var bid = Math.floor(doc_id / 40);
+        bshards[bid] = 1;
+      });
+      var bpromises = Object.keys(bshards).map(function(bid) {
+        if (_buscaCache['b'+bid]) return Promise.resolve([bid, _buscaCache['b'+bid]]);
+        return ler('dados/indice/body-' + bid + '.json').then(function(d) {
+          _buscaCache['b'+bid] = d; return [bid, d];
+        });
+      });
+      Promise.all(bpromises).then(function(bres) {
+        var bdata = {};
+        bres.forEach(function(r) { bdata[r[0]] = r[1]; });
+        
+        // Populate D.proposicoes or E.lista temporarily so detalheProposicao works?
+        // E.lista needs the data array!
+        E.lista = [];
+        var html = '<h2 class="sub">Resultados da busca</h2>' + nota;
+        var kinds = {0: "Deputados", 1: "Proposições", 2: "Emendas", 3: "Sessões", 4: "Matérias", 5: "Comissões", 6: "Documentos"};
+        var grouped = {0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: []};
+        
+        intersect.forEach(function(doc_id) {
+          var bid = Math.floor(doc_id / 40);
+          var b = bdata[bid];
+          if (b && b.d && b.d[doc_id]) {
+            var item = b.d[doc_id];
+            grouped[item.k].push({id: doc_id, k: item.k, v: item.v, p: b.p});
+          }
+        });
+        
+        for (var k in kinds) {
+          if (grouped[k].length === 0) continue;
+          html += '<h3>' + kinds[k] + '</h3><ul class="lista">';
+          grouped[k].forEach(function(item) {
+            if (item.k === 1) { // proposicao
+              var prop_id = item.v;
+              var l = item.p[prop_id];
+              if (l) {
+                E.lista.push(l);
+                html += '<li><a href="javascript:;" onclick="detalheProposicao(' + prop_id + ')">' + esc(l[1]) + ' - ' + esc(l[3]) + '</a></li>';
+              }
+            } else if (item.k === 6) { // documento
+              var prop_id = item.v[0];
+              var text = item.v[1];
+              var l = item.p[prop_id];
+              if (l) {
+                E.lista.push(l);
+                // Simple snippet: find first token
+                var idx = text.toLowerCase().indexOf(tokens[0]);
+                var start = Math.max(0, idx - 150);
+                var snippet = text.substring(start, start + 300);
+                html += '<li><a href="javascript:;" onclick="detalheProposicao(' + prop_id + ')">' + esc(l[1]) + ' - ' + esc(snippet) + '...</a></li>';
+              }
+            } else if (item.k === 0) { // deputado
+                // skip for now or just link to tab
+                html += '<li><a href="#deputados">' + esc('Deputado ' + item.v) + '</a></li>';
+            } else {
+                html += '<li>' + esc('Item ' + item.v) + '</li>';
+            }
+          });
+          html += '</ul>';
+        }
+        painel.innerHTML = html;
+      });
+    });
+  }
+
   function desenhar() {
+    if (E.busca && E.busca.length > 2) { return desenharBusca(E.busca); }
     var vez = ++desenho, painel = $('painel');
     Array.prototype.forEach.call(document.querySelectorAll('.aba'), function (b) {
       b.setAttribute('aria-selected', String(b.getAttribute('data-aba') === E.aba)); });
