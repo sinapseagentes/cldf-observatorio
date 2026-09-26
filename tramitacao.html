@@ -1,0 +1,888 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Mapa mental do rito de cada classe de proposição na Câmara Legislativa do Distrito Federal, com a norma que sustenta cada passo.">
+<title>Mapa da Tramitação CLDF</title>
+<style>
+:root{
+  --bg:#F3F5F1; --surface:#FFFFFF; --ink:#16201B; --muted:#5C6A63; --line:#D3DBD5; --line-2:#B9C4BD;
+  --accent:#1E6B47; --accent-soft:#DCEFE4;
+  --com:#3B5A85; --com-soft:#DFE8F4;
+  --plen:#6A4C9C; --plen-soft:#E9E2F6;
+  --mesa:#2E6F74; --mesa-soft:#D8EEEF;
+  --exec:#9A5B12; --exec-soft:#F6E7CE;
+  --nao:#A83A2B; --nao-soft:#F6DDD8;
+  --ini:#4E5D55; --ini-soft:#E6EAE6;
+  --fam:#16201B; --fam-soft:#EDF1EC;
+  --shadow:0 1px 2px rgba(22,32,27,.06),0 8px 24px rgba(22,32,27,.06);
+  --radius:6px;
+  --display:system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --body:system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#101512; --surface:#182019; --ink:#E7ECE7; --muted:#9BA89F; --line:#2B372F; --line-2:#3C4A41;
+    --accent:#5BBB8C; --accent-soft:#1D3A2B;
+    --com:#8FB0DA; --com-soft:#1B2A3B;
+    --plen:#B89CE0; --plen-soft:#29203F;
+    --mesa:#6FC3C8; --mesa-soft:#143335;
+    --exec:#E2A85A; --exec-soft:#3A2B14;
+    --nao:#E68E7E; --nao-soft:#3E1F1A;
+    --ini:#AEBBB3; --ini-soft:#232D27;
+    --fam:#E7ECE7; --fam-soft:#1F2923;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#101512; --surface:#182019; --ink:#E7ECE7; --muted:#9BA89F; --line:#2B372F; --line-2:#3C4A41;
+  --accent:#5BBB8C; --accent-soft:#1D3A2B;
+  --com:#8FB0DA; --com-soft:#1B2A3B;
+  --plen:#B89CE0; --plen-soft:#29203F;
+  --mesa:#6FC3C8; --mesa-soft:#143335;
+  --exec:#E2A85A; --exec-soft:#3A2B14;
+  --nao:#E68E7E; --nao-soft:#3E1F1A;
+  --ini:#AEBBB3; --ini-soft:#232D27;
+  --fam:#E7ECE7; --fam-soft:#1F2923;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-block:28px 56px;padding-inline:16px}
+h1,h2,h3{font-family:var(--display);font-stretch:87.5%;text-wrap:balance;margin:0}
+h1{font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-.01em;line-height:1.05}
+h2{font-size:20px;font-weight:700;margin-bottom:8px}
+h3{font-size:15px;font-weight:700}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+p{margin:0}
+.lede{max-width:68ch;color:var(--muted);margin-top:10px}
+.lede b{color:var(--ink);font-weight:600}
+header{display:grid;gap:8px;margin-bottom:22px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:8px;font-size:13px;color:var(--muted)}
+.meta span b{color:var(--ink);font-weight:600}
+
+/* selector rail */
+.rail{display:grid;gap:10px;margin-bottom:14px}
+.fam{display:grid;grid-template-columns:200px 1fr;gap:6px 14px;align-items:start}
+.fam .fam-name{font-family:var(--display);font-stretch:87.5%;font-weight:700;font-size:13px;line-height:1.25;padding-top:6px}
+.fam .fam-name small{display:block;font-family:var(--body);font-weight:400;color:var(--muted);font-size:12px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{appearance:none;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 11px 5px 9px;font:inherit;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;line-height:1.2}
+.chip .sg{font-family:var(--mono);font-weight:500;font-size:12px}
+.chip .ct{color:var(--muted);font-size:11.5px;font-variant-numeric:tabular-nums}
+.chip:hover{border-color:var(--accent)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip[aria-pressed="true"] .ct{color:rgba(255,255,255,.8)}
+.chip:focus-visible,.node:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (max-width:640px){.fam{grid-template-columns:1fr}.fam .fam-name{padding-top:0}}
+
+/* map */
+.map-card{background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);overflow:hidden}
+.map-head{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between;padding:14px 16px 10px;border-bottom:1px solid var(--line)}
+.map-head .title{font-family:var(--display);font-stretch:87.5%;font-weight:800;font-size:18px}
+.map-head .sub{color:var(--muted);font-size:13px}
+.map-tools{display:flex;gap:6px;flex-wrap:wrap}
+.leve{appearance:none;border:1px solid var(--line-2);background:transparent;color:var(--ink);border-radius:var(--radius);padding:4px 10px;font:inherit;font-size:12.5px;cursor:pointer}
+.leve:hover{border-color:var(--accent)}
+.map-scroll{overflow-x:auto;overflow-y:hidden;padding:14px 12px 18px}
+svg.map{display:block;font-family:var(--body)}
+.node{cursor:pointer}
+.node rect.box{fill:var(--surface);stroke:var(--line-2);stroke-width:1.2;rx:6}
+.node.k-fam rect.box{fill:var(--fam-soft);stroke:var(--fam);stroke-width:1.4}
+.node.k-esp rect.box{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.6}
+.node.k-root rect.box{fill:var(--ink);stroke:var(--ink)}
+.node.k-root text{fill:var(--bg)}
+.node.k-ini rect.box{fill:var(--ini-soft);stroke:var(--ini)}
+.node.k-com rect.box{fill:var(--com-soft);stroke:var(--com)}
+.node.k-plen rect.box{fill:var(--plen-soft);stroke:var(--plen)}
+.node.k-mesa rect.box{fill:var(--mesa-soft);stroke:var(--mesa)}
+.node.k-exec rect.box{fill:var(--exec-soft);stroke:var(--exec)}
+.node.k-fim rect.box{fill:var(--accent);stroke:var(--accent)}
+.node.k-fim text{fill:#fff}
+.node.k-nao rect.box{fill:var(--nao-soft);stroke:var(--nao)}
+.node.unsure rect.box{stroke-dasharray:4 3}
+.node text.lbl{font-size:12.5px;font-weight:600;fill:var(--ink)}
+.node text.nt{font-size:10.5px;fill:var(--muted)}
+.node.k-fim text.nt,.node.k-root text.nt{fill:rgba(255,255,255,.82)}
+.node text.src{font-family:var(--mono);font-size:9px;fill:var(--muted)}
+.node rect.srcbg{fill:var(--surface);stroke:var(--line);stroke-width:1;rx:3}
+.node.k-fim rect.srcbg,.node.k-root rect.srcbg{fill:rgba(255,255,255,.18);stroke:transparent}
+.node.k-fim text.src,.node.k-root text.src{fill:#fff}
+.node .more{font-family:var(--mono);font-size:10px;fill:var(--ink)}
+.node rect.morebg{fill:var(--surface);stroke:var(--line-2);rx:8}
+.node:hover rect.box{filter:brightness(.97)}
+.node.selected rect.box{stroke-width:2.4}
+path.link{fill:none;stroke:var(--line-2);stroke-width:1.4}
+path.link.l-nao{stroke:var(--nao)}
+path.link.l-fim{stroke:var(--accent)}
+path.link.l-exec{stroke:var(--exec)}
+
+/* detail + legend */
+.below{display:grid;grid-template-columns:1.2fr .8fr;gap:14px;margin-top:14px}
+@media (max-width:820px){.below{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.panel h2{font-size:16px}
+.detail-title{font-family:var(--display);font-stretch:87.5%;font-weight:700;font-size:17px;margin-top:4px}
+.detail-note{color:var(--muted);font-size:13.5px;margin-top:2px}
+.detail-body{margin-top:10px;max-width:68ch}
+.tag{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;padding:2px 7px;border:1px solid var(--line-2);border-radius:4px;color:var(--ink);background:var(--bg)}
+.tag i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.tag.c-v i{background:var(--accent)} .tag.c-p i{background:var(--exec)} .tag.c-m i{background:var(--com)}
+.conf{margin-top:10px;font-size:13px;color:var(--muted)}
+dl.facts{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;margin:8px 0 0;font-size:13.5px}
+dl.facts dt{color:var(--muted);font-weight:500}
+dl.facts dd{margin:0}
+.legend{display:grid;gap:8px;font-size:13px;margin-top:8px}
+.legend .row{display:flex;align-items:center;gap:10px}
+.sw{width:22px;height:14px;border-radius:3px;border:1.2px solid;flex:none}
+.sw.ini{background:var(--ini-soft);border-color:var(--ini)} .sw.com{background:var(--com-soft);border-color:var(--com)}
+.sw.plen{background:var(--plen-soft);border-color:var(--plen)} .sw.mesa{background:var(--mesa-soft);border-color:var(--mesa)}
+.sw.exec{background:var(--exec-soft);border-color:var(--exec)} .sw.fim{background:var(--accent);border-color:var(--accent)}
+.sw.nao{background:var(--nao-soft);border-color:var(--nao)} .sw.dash{background:var(--surface);border-color:var(--line-2);border-style:dashed}
+
+/* spine */
+.spine{margin:22px 0 0}
+.spine-row{display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin-top:10px;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.spine-row div{padding:10px 12px;border-right:1px solid var(--line);font-size:12.5px}
+.spine-row div:last-child{border-right:0}
+.spine-row code{font-family:var(--mono);font-size:12px;font-weight:500;display:block;margin-bottom:2px}
+.spine-row .ph{color:var(--muted)}
+@media (max-width:720px){.spine-row{grid-template-columns:1fr 1fr}.spine-row div{border-bottom:1px solid var(--line)}}
+
+/* sources */
+.sources{margin-top:26px}
+.sources ol{padding-left:20px;margin:8px 0 0;font-size:13.5px;max-width:80ch}
+.sources li{margin-bottom:6px}
+.sources a{color:var(--accent)}
+.conf a{color:var(--accent)}
+.sources .blocked{color:var(--muted);font-family:var(--mono);font-size:11px}
+.note{margin-top:14px;font-size:13px;color:var(--muted);max-width:80ch}
+@media (prefers-reduced-motion:no-preference){.node rect.box{transition:filter .15s}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Câmara Legislativa do Distrito Federal · Regimento Interno (Res. nº 353/2024) e Lei Orgânica</div>
+  <h1>Mapa da tramitação por classe de proposição</h1>
+  <p class="lede">Do protocolo à norma, ou ao arquivo: o caminho que cada classe de proposição percorre na CLDF, nó a nó, com a regra que o sustenta.
+  <b>Clique numa classe</b> para abrir o seu rito; clique num nó para ler a regra e a fonte. Cada nó cita o artigo do Regimento Interno de 2024 ou da Lei Orgânica que o sustenta; os poucos nós tracejados não têm fonte em nenhum texto lido.</p>
+  <div class="meta">
+    <span>Regimento vigente: <b>Res. nº 353/2024</b>, em vigor desde 6 jan 2025</span>
+    <span>Lei Orgânica: <b>arts. 69–76</b> (processo legislativo)</span>
+    <span>Prazos: <b>dias úteis</b>, salvo quando o nó diz “corridos” (RI art. 286)</span>
+    <span id="meta-volumes"></span>
+  </div>
+</header>
+
+<section class="rail" id="rail" aria-label="Classes de proposição"></section>
+
+<section class="map-card" aria-label="Mapa mental">
+  <div class="map-head">
+    <div><span class="title" id="map-title">Todas as classes</span> <span class="sub" id="map-sub"></span></div>
+    <div class="map-tools">
+      <button type="button" class="leve" id="btn-expand">Abrir tudo</button>
+      <button type="button" class="leve" id="btn-collapse">Fechar ramos</button>
+      <button type="button" class="leve" id="btn-overview">Visão geral</button>
+    </div>
+  </div>
+  <div class="map-scroll" id="map-scroll">
+    <svg class="map" id="map" role="img" aria-label="Mapa mental da tramitação das proposições na CLDF"></svg>
+  </div>
+</section>
+
+<div class="below">
+  <section class="panel" aria-label="Detalhe do nó">
+    <h2>Regra do nó selecionado</h2>
+    <div id="detail">
+      <div class="detail-title">Proposição na CLDF</div>
+      <div class="detail-note">Clique num nó do mapa.</div>
+      <p class="detail-body">Toda proposição nasce como documento no PLe (Processo Legislativo eletrônico), é numerada e publicada e segue o rito que o Regimento reserva à sua classe. As classes que geram norma passam por comissões e Plenário; as que não geram norma resolvem-se numa comissão, na Mesa ou num despacho.</p>
+    </div>
+  </section>
+  <section class="panel" aria-label="Legenda">
+    <h2>Legenda</h2>
+    <div class="legend">
+      <div class="row"><span class="sw ini"></span>Quem pode propor</div>
+      <div class="row"><span class="sw com"></span>Comissões (CCJ, mérito, CEOF)</div>
+      <div class="row"><span class="sw plen"></span>Plenário — discussão e votação</div>
+      <div class="row"><span class="sw mesa"></span>Mesa, Presidente, redação final</div>
+      <div class="row"><span class="sw exec"></span>Governador — sanção e veto</div>
+      <div class="row"><span class="sw fim"></span>Desfecho: a norma ou o efeito</div>
+      <div class="row"><span class="sw nao"></span>Rejeição, arquivo, veto mantido</div>
+      <div class="row"><span class="sw dash"></span>Ponto sem norma publicada</div>
+    </div>
+    <p class="note" style="margin-top:14px">Clique num nó para ler a regra. A fonte aparece embaixo, com link para a norma.</p>
+  </section>
+</div>
+
+<section class="spine" aria-label="Espinha do PLe">
+  <h2>O caminho comum, nas etapas do PLe</h2>
+  <p class="note" style="margin-top:2px">O PLe (Processo Legislativo eletrônico da CLDF) classifica cada proposição em uma de cinco etapas. O Observatório mostra essa etapa em cada proposição. Os ritos acima são os desvios e as saídas desse caminho comum.</p>
+  <div class="spine-row">
+    <div><code>APRESENTACAO</code><span class="ph">protocolo, leitura, publicação</span></div>
+    <div><code>COMISSOES</code><span class="ph">distribuição, relatoria, pareceres</span></div>
+    <div><code>PLENARIO</code><span class="ph">Ordem do Dia, turnos, votação</span></div>
+    <div><code>REDACAO_FINAL</code><span class="ph">texto final, autógrafo</span></div>
+    <div><code>ARQUIVAR</code><span class="ph">rejeição ou encerramento</span></div>
+  </div>
+  <p class="note">Depois dessas etapas, o registro marca a proposição com “Sanção Veto ou Promulgação” e guarda os documentos do rito: parecer, emenda, redação final, mensagem do Executivo, relatório de veto, folha de votação e a norma final. Quando uma proposição sai de tramitação sem decisão, o PLe registra só ENCERRAR_PROPOSICAO, sem o motivo, e o evento pode ser desfeito por REABRIR_PROPOSICAO.</p>
+</section>
+
+<section class="sources" aria-label="Fontes">
+  <h2>Fontes</h2>
+  <ol id="lista-fontes"></ol>
+</section>
+</div>
+
+<script>
+(function(){
+'use strict';
+/* ---------- fontes e contagens: lidas de dados/tramitacao-fontes.json ----------
+   Nenhuma URL e nenhum número medido são escritos neste arquivo (OS-160). As ligações
+   estão no feed, cujos hosts o sinal 41d confere contra uma lista fechada; as contagens
+   são contadas no build a partir do `ato` e reconferidas por uma segunda leitura. O que
+   fica aqui é o texto das regras e a citação do artigo — a única coisa que uma norma diz
+   e um banco de dados não. Os números do Regimento (prazos, quóruns, frações) ficam no
+   texto: são a letra da norma, não medida do registro. */
+var D = null;
+function RI(a){ return {t:'Regimento Interno (Res. nº 353/2024), art. '+a, u:D.normas.ri}; }
+function LO(a){ return {t:'Lei Orgânica do DF, art. '+a, u:D.normas.lo}; }
+function M(a){ return {t:'Regimento de 2000, art. '+a+' — só histórico, via Manual das Comissões (2011)', u:D.normas.manual}; }
+var S = {};
+var N = {}, JAN = {};
+var SIGLAS = ['PL','PLC','PELO','PDL','PR','IND','MO','REQ','EMENDA','REC','QO','IRF','SUG','PROC'];
+/* PROC não é ato de deputado: são mensagens do Governador, e o Observatório publica os
+   atos dos 25 titulares. Por isso a sua contagem sai do ledger inteiro e a sua janela é a
+   do ledger, enquanto as das outras classes saem do que o Observatório publica — cada
+   número no rótulo da janela em que pode ser reconferido na fonte que o nó cita. */
+var ESCOPO = {PROC:'ledger'};
+function fmt(n){ return n===null||n===undefined ? '—' : Number(n).toLocaleString('pt-BR'); }
+function janelaDe(sg){
+  var p = D.janela.publicados, padrao = [p[0], p[p.length-1]];
+  if (ESCOPO[sg] !== 'ledger') return padrao;
+  /* No escopo do ledger a janela é a dos anos que a própria classe tem, para o rótulo não
+     anunciar um intervalo mais largo do que o que foi contado. */
+  var por = (D.apresentacoes.ledger || {})[sg] || {}, anos = Object.keys(por).sort();
+  return anos.length ? [Number(anos[0]), Number(anos[anos.length-1])] : padrao;
+}
+function somaAnos(sg, de, ate){
+  var por = (D.apresentacoes[ESCOPO[sg] || 'titulares'] || {})[sg];
+  if (!por) return null;
+  var t = 0, achou = false;
+  for (var a = de; a <= ate; a++){ if (por[a] !== undefined){ t += por[a]; achou = true; } }
+  return achou ? t : null;
+}
+function rotuloJanela(sg){ var j = JAN[sg]; return j[0] + '–' + String(j[1]).slice(2); }
+function vol(sg, palavra){
+  var n = N[sg];
+  if (n === null || n === undefined) return '';
+  return ' · ' + fmt(n) + ' ' + (palavra || (n === 1 ? 'apresentação' : 'apresentações')) + ' ' + rotuloJanela(sg);
+}
+function etapaDe(sg, nome){
+  var por = (D.etapas[sg] || {}), j = janelaDe(sg), t = 0;
+  for (var a = j[0]; a <= j[1]; a++){ if (por[a] && por[a][nome] !== undefined) t += por[a][nome]; }
+  return t;
+}
+function porAno(sg){
+  var por = (D.apresentacoes[ESCOPO[sg] || 'titulares'] || {})[sg] || {}, partes = [];
+  Object.keys(por).sort().forEach(function(a){ partes.push(a + ' — ' + fmt(por[a])); });
+  return partes.join(' · ');
+}
+
+/* ---------- nós ---------- */
+function nd(t,o){ o=o||{}; return {t:t, n:o.n||'', s:o.s||null, k:o.k||'', u:!!o.u, d:o.d||'', c:o.c||[], open:o.open!==false, id:o.id||null}; }
+
+function notaF077(){ return 'O PLe não diz qual desses motivos encerrou cada proposição: registra só o evento ENCERRAR_PROPOSICAO, sem causa, e as palavras “decurso” e “legislatura” não aparecem em nenhum dos '+fmt(D.eventos_de_tramitacao)+' eventos de tramitação lidos pelo projeto. ENCERRAR_PROPOSICAO também pode ser desfeito por REABRIR_PROPOSICAO: encerrada não quer dizer decidida. Para saber por que uma proposição parou, é preciso aplicar estas regras de fora.'; }
+
+function iniciativaLei(){
+  return nd('Iniciativa',{k:'ini',s:LO('71'),d:'A iniciativa das leis complementares e ordinárias cabe a qualquer deputado ou comissão, ao Governador, aos cidadãos, ao TCDF e à Defensoria Pública nas matérias próprias. O Regimento acrescenta a Mesa Diretora (art. 151).',c:[
+    nd('Deputado, comissão ou Mesa',{s:RI('151')}),
+    nd('Governador',{n:'privativa: cargos, servidores, secretarias, orçamento, PDOT, imóveis',s:LO('71, §1º'),d:'É privativa do Governador a iniciativa das leis sobre criação de cargos e aumento de remuneração, regime dos servidores, organização da PGDF, estrutura das secretarias e órgãos, PPA, LDO e LOA, PDOT, LUOS, PPCUB, planos de desenvolvimento local e afetação ou alienação de imóveis do DF. Projeto de deputado nessas matérias não pode ser deliberado (RI art. 148, II).',c:[
+      nd('Emenda parlamentar: sem aumento de despesa',{n:'e com pertinência temática',s:LO('71, §3º; 72'),d:'Emendas a projetos do Executivo não podem aumentar a despesa prevista e devem guardar pertinência temática com a matéria (LODF arts. 71, §3º, e 72; RI art. 148, VII).'}),
+      nd('Pode pedir urgência',{n:'45 dias; depois sobrestá a pauta',s:LO('73'),d:'O Governador pode pedir urgência para projetos seus. Se a Câmara não se manifestar em 45 dias corridos, o projeto entra na ordem do dia e sobrestá as demais deliberações. O prazo não corre no recesso e não vale para códigos, PPA, LDO, LOA nem emenda à Lei Orgânica (RI art. 222).'})
+    ]}),
+    nd('TCDF e Defensoria Pública',{n:'nas matérias dos arts. 84, IV, 86 e 114, §4º',s:LO('71, IV–V')}),
+    nd('Cidadãos — iniciativa popular',{n:'1% do eleitorado, em 3 zonas eleitorais',s:RI('270, II'),d:'Projeto de lei ou de lei complementar assinado por no mínimo 1% do eleitorado do DF, distribuído por três zonas eleitorais (LODF art. 76). Pode ser patrocinado por entidade civil, é protocolado na Mesa, tem tramitação especial e numeração “de iniciativa popular”. Representantes dos autores defendem o projeto nas comissões; a CCJ corrige vícios de forma, sem rejeição liminar; a Mesa designa um deputado para exercer os poderes de autor.'})
+  ]});
+}
+function apresentacao(o){
+  o=o||{};
+  var regime = o.semRegime ? [] : [
+    nd('Regime de tramitação',{n:'urgência ou ordinário — não há mais “prioridade”',s:RI('157'),d:'Toda proposição tramita em regime de urgência ou de tramitação ordinária. O regime de prioridade do texto de 2000 deixou de existir.',c:[
+      nd('Urgência concedida pelo Plenário',{n:'requerimento de 1/3, aprovado por 2/3 (16 de 24)',s:RI('159'),d:'O requerimento de urgência precisa ser subscrito por 1/3 e aprovado por 2/3 dos deputados. Aprovado, a matéria pode entrar na ordem do dia da própria sessão (art. 160). No PLe, o pedido é um REQ que começa por “Requer a tramitação em regime de urgência do…”; o campo regimeUrgencia da proposição não diz se o regime foi de fato aplicado.'}),
+      nd('Urgência pela natureza da matéria',{n:'estado de sítio, sede do governo, ausência do Governador, decisão judicial, calamidade',s:RI('157, §1º, I')}),
+      nd('Urgência pedida pelo Governador',{n:'45 dias corridos, depois sobrestá a pauta',s:RI('222')}),
+      nd('O que a urgência não dispensa',{n:'publicação, pareceres, quórum, prazos de emenda, turnos, redação final',s:RI('158, §1º'),d:'Mesmo em urgência não se dispensam a publicação, os pareceres das comissões (salvo dispensa unânime dos líderes, art. 189, §1º), o quórum, os interstícios e prazos de emenda, os turnos, a redação final e os autógrafos.'}),
+      nd('Até 2024: também “prioridade”',{n:'parecer em 5 dias úteis',s:M('90'),d:'O texto de 2000 tinha três regimes — ordinário, prioridade e urgência — com prazos de parecer de 20, 5 e 2 dias úteis. Proposições antigas no PLe ainda podem trazer o regime de prioridade.'})
+    ]})
+  ];
+  return nd('Apresentação',{k:'mesa',n:'etapa no PLe: APRESENTACAO',s:S.ple,d:'A proposição é protocolada, numerada e publicada; só é considerada recebida quando distribuída às comissões (art. 149).',c:[
+    nd('Protocolo eletrônico e numeração',{n:'série própria por espécie, reiniciada a cada legislatura',s:RI('145–146'),d:'Protocolada eletronicamente a qualquer dia e hora, a proposição é numerada, publicada no Sistema de Publicações Legislativas e disponibilizada no PLe. Cada espécie tem numeração própria por legislatura; as emendas são numeradas dentro de cada proposição, pela ordem de entrada.'}),
+    nd('Leitura em Plenário',{n:'obrigatória antes da distribuição só se a autoria for externa',s:RI('146, §3º'),d:'Proposições do Governador, do TCDF, da Defensoria ou de cidadãos são lidas em plenário antes de ir às comissões. O campo dataLeitura do PLe é a data que o Observatório mostra como “lida em”.'}),
+    nd('Requisitos',{n:'técnica legislativa · subscritores mínimos · ementa · justificação',s:RI('147–149'),d:'Para ser distribuída, a proposição segue a técnica legislativa, traz as normas a que remete, tem o número mínimo de subscritores e contém epígrafe, autor, ementa, a Câmara como órgão legiferante, texto, justificação e assinatura. Emendas e requerimentos dispensam justificação.',c:[
+      nd('Não pode ser deliberada',{n:'sem poder de iniciativa · espécie errada · contra súmula da CCJ · gratuidade sem fonte',s:RI('148'),k:'nao',d:'Não se delibera matéria que delegue competência entre Poderes, cujo autor não tenha iniciativa, imprópria para a espécie, contrária a súmula da CCJ, que conceda gratuidade sem fonte de custeio, ou de projeto rejeitado na mesma sessão legislativa sem a maioria absoluta.'}),
+      nd('Autoria externa: exposição de motivos',{n:'resultado esperado · comparativo · impacto financeiro',s:RI('149, §2º')}),
+      nd('Fora dos requisitos: devolvida ao autor',{n:'5 dias para responder · sem resposta, arquivo definitivo',s:RI('149, §4º; 284'),k:'nao',d:'Na redação da Res. nº 358/2025, o Presidente devolve ao gabinete do autor a proposição que não atende ao art. 149, com os fundamentos e o prazo. O autor tem 5 dias para se manifestar e o Presidente decide em outros 5. Do não recebimento cabe recurso ao Plenário (art. 144, I, a). Sem manifestação, ou em decisão irrecorrida, a proposição é arquivada em definitivo. Nas proposições do Governador, quem responde é o líder do Governo. Há uma divergência interna: o art. 44, II, a, não alterado, ainda manda devolver a proposição que não atenda aos arts. 148 e 149; o art. 284 novo fala só do art. 149.'})
+    ]}),
+    nd('Contagem dos prazos',{n:'dias úteis, salvo “corridos” · da publicação · suspensos no recesso',s:RI('286'),d:'Salvo disposição em contrário, prazos em dias contam-se em dias úteis, e prazos em sessões, em sessões ordinárias; prazos em meses, de data a data. Exclui-se o dia da decisão e inclui-se o do vencimento. Os prazos contam da publicação no Sistema de Publicações Legislativas ou no DCL e ficam suspensos no recesso. As exceções expressas são dias corridos: 30 para o veto, 10 de interstício e 15 para promulgar a PELO, 45 da urgência do Governador.'}),
+    nd('Tramitação conjunta',{n:'mesma espécie, matéria análoga · a mais antiga tem precedência',s:RI('155–156'),d:'O Presidente determina de ofício, antes da distribuição, ou a requerimento até o fim da análise de mérito; decide em 5 dias, ou de imediato se todos os autores assinam. As apensadas seguem a mais antiga, têm um único relator, podem receber substitutivo comum, herdam a urgência de qualquer uma e entram juntas na ordem do dia.'})
+  ].concat(regime).concat(o.extra||[])});
+}
+function comissoesLei(){
+  return nd('Comissões',{k:'com',n:'etapa no PLe: COMISSOES · primeiro o mérito, depois a admissibilidade',s:RI('162'),d:'O Presidente distribui por despacho. Encerrado o 1º prazo de emendas, a proposição vai às comissões de mérito, em conjunto; encerrado o 2º, às de admissibilidade — CCJ e CEOF. As comissões deliberam por maioria, presente a maioria absoluta dos membros (art. 172, I). O Presidente pode incluir ou retirar comissões do despacho, de ofício ou a requerimento, até o fim da fase de mérito ou de admissibilidade (art. 162, §1º, na redação da Res. nº 358/2025). O texto de 2000 fazia o contrário: admissibilidade antes do mérito.',c:[
+    nd('Emendas — 1º prazo',{n:'5 dias úteis, antes das comissões de mérito',s:RI('163, I'),d:'Prazo único e comum de 5 dias, em qualquer regime, publicado com dia de início e de fim. Fora dos dois prazos só se admite emenda de relator (art. 163, §1º). Título de cidadão honorário ou benemérito dispensa o prazo (§4º).'}),
+    nd('Comissões de mérito',{n:'em conjunto · 20 dias úteis, 5 em urgência',s:RI('162, I; 167'),d:'Prazo contado do recebimento no colegiado. O Presidente da Câmara pode prorrogá-lo nas hipóteses do art. 166, III. O parecer só sobre emenda tem 10 dias, ou 5 em urgência (art. 168).',c:[
+      nd('Relator: 4/5 do prazo',{n:'16 dias úteis · 4 em urgência',s:RI('167, §3º–§4º'),d:'Ao relator cabem 4/5 do prazo da comissão, contados da disponibilização. Esgotado, o presidente da comissão pode dar novo prazo, descontado do da comissão. Se o relator perde o prazo sem justificativa, a troca depende de pedido do autor (art. 165). No texto de 2000 o relator tinha metade do prazo.'}),
+      nd('Pedido de vista',{n:'até a reunião seguinte · 2 horas em urgência',s:RI('172, VI')}),
+      nd('O que a comissão pode decidir',{n:'aprovar, rejeitar, sugerir arquivo, propor projeto, emendar, propor prejudicialidade',s:RI('172, III')}),
+      nd('Relator vencido · voto em separado',{n:'novo relator na reunião seguinte',s:RI('172, XIII–XIV'),d:'Vencido o relator, o presidente designa substituto para apresentar o parecer da maioria na reunião seguinte. Aprovado voto diverso, ele vira o parecer e seu autor, o relator. Nenhum parecer é aprovado se as abstenções igualarem ou superarem os votos favoráveis (inciso XI).'})
+    ]}),
+    nd('Emendas — 2º prazo',{n:'5 dias úteis, antes da admissibilidade',s:RI('163, II')}),
+    nd('CCJ e CEOF — admissibilidade',{n:'em conjunto · 20 dias úteis, 5 em urgência',s:RI('162, II; 167, II'),d:'A CCJ examina constitucionalidade, juridicidade e legalidade; a CEOF, a adequação orçamentária e financeira. Os dois pareceres de inadmissibilidade são terminativos.',c:[
+      nd('CCJ: parecer terminativo',{n:'constitucionalidade, juridicidade, legalidade',s:RI('64, parágrafo único')}),
+      nd('CEOF: parecer terminativo',{n:'adequação orçamentária e financeira',s:RI('65, §1º')}),
+      nd('Inadmitida → recurso ao Plenário',{n:'1/8 dos deputados (3), em 5 dias',s:RI('144, IV; 152, I, a'),c:[
+        nd('Sem recurso: prejudicada e arquivada',{k:'nao',s:RI('187, XIII; §5º')})
+      ]}),
+      nd('Emendas voltam ao mérito',{n:'salvo de redação, supressivas simples, de ajuste ou inadmitidas',s:RI('173')})
+    ]}),
+    nd('Prazo esgotado',{n:'autor pede envio à admissibilidade ou ao Plenário',s:RI('174'),d:'Esgotados os prazos das comissões, o Presidente da Câmara, a requerimento do autor e ouvido o Colégio de Líderes, pode mandar a proposição às comissões de admissibilidade ou ao Plenário.'})
+  ]});
+}
+function plenario(o){
+  var dois = o.turnos === 2;
+  var c = [
+    nd('Inclusão na ordem do dia',{n:'o Presidente fixa · urgentes primeiro',s:RI('176–177'),d:'Entra na ordem do dia a proposição que não depende de parecer, que concluiu as comissões, que ganhou urgência, que foi enviada após prazo esgotado ou por decisão do Colégio de Líderes. Grupos: redações finais; 2º turno ou turno único; 1º turno; sem parecer. Em cada grupo: PELO, PLC, PL, PDL, PR, demais. O Colégio de Líderes pode reordenar.'}),
+    nd('Emendas de plenário',{n:dois?'da inclusão até o anúncio · no 2º turno, só com 1/8':'da inclusão até o anúncio',s:RI('179–180'),d:'Apresentadas da inclusão na ordem do dia até o anúncio da deliberação: por qualquer deputado em turno único ou 1º turno; por 1/8 no 2º turno. Emenda aglutinativa só em plenário, pelos autores das emendas fundidas ou pela maioria absoluta.'}),
+    nd('Pareceres pendentes',{n:'dispensa só com líderes unânimes e sem emendas · senão, parecer oral',s:RI('189–190'),d:'Anunciada a matéria, o Presidente informa pareceres pendentes. Os líderes podem dispensá-los por unanimidade, se a proposição não recebeu emenda; nesse caso ela é tida por aprovada e admitida em todas as comissões. Senão, os presidentes das comissões designam relator em plenário e os pareceres são orais, votados em bloco.'}),
+    nd('Discussão',{n:'5 min por deputado · encerrável após 12 oradores',s:RI('191–192'),c:[
+      nd('Adiamento',{n:'discussão até 15 dias · votação até 5 dias',s:RI('188; 193')})
+    ]}),
+    nd(dois?'1º turno — votação':'Votação — turno único',{n:o.quorum,s:o.qs,d:'Simbólica em regra; nominal quando a matéria exige maioria absoluta ou qualificada, a requerimento ou por verificação (art. 203). Deliberações por maioria de votos, presente a maioria absoluta; abstenções contam para o quórum (art. 196).'+(o.qd?' '+o.qd:'')})
+  ];
+  if (dois) c.push(nd('2º turno',{n:'sem interstício, mas em sessão posterior',s:RI('182'),d:'Não há interstício entre os turnos, mas o 2º turno ocorre em sessão posterior à do 1º. A requerimento aprovado pelo Plenário, observa-se interstício de 2 dias, ou 1 em urgência.'}));
+  (o.extra||[]).forEach(function(x){ c.push(x); });
+  c.push(nd('Rejeitado → arquivo',{k:'nao',n:'etapa no PLe: ARQUIVAR · reapresentação na mesma sessão legislativa só com maioria absoluta',s:RI('148, VI; 152, III, a'),d:'Rejeitada em qualquer turno, a proposição vai ao arquivo. A matéria só volta na mesma sessão legislativa se subscrita pela maioria absoluta (LODF art. 74, §7º). No PLe a etapa passa a ARQUIVAR e o marcador diz “Arquivar”, sem declarar o motivo.'}));
+  return nd('Plenário',{k:'plen',n:dois?'etapa no PLe: PLENARIO · dois turnos':'etapa no PLe: PLENARIO · turno único',s:RI('181'),d:'As proposições são apreciadas em turno único, salvo PELO, PLC, PL e os PR que alteram o Regimento ou o Código de Ética, tratam de polícia interna ou de cargos, que têm dois turnos.',c:c});
+}
+function redacaoFinal(destino, dn, ds, dd){
+  return nd('Redação final',{k:'mesa',n:'etapa no PLe: REDACAO_FINAL · 10 dias úteis',s:RI('206–208'),d:'Aprovada em turno único ou 2º turno, a proposição vai à redação final, que integra o turno em que se conclui a apreciação, independe de votação salvo requerimento e é publicada.',c:[
+    nd('Quem redige',{n:'CEOF: PPA, LDO, LOA e créditos · CCJ: todo o resto',s:RI('207'),d:'No texto de 2000 a Mesa redigia as alterações do Regimento; no de 2024 ficam com a CCJ.'}),
+    nd('Correção sem alterar o sentido',{n:'relatada ao Plenário · vedado inserir dispositivo',s:RI('207, §§1º–2º')}),
+    nd('Impugnação (IRF)',{n:'5 dias da publicação · Presidente decide · recurso ao Plenário',s:RI('208, §1º, II; §3º')}),
+    nd(destino,{n:dn||'autógrafos em 10 dias',s:ds||RI('210'),d:dd||'A proposição aprovada em definitivo vai em autógrafos à sanção ou à promulgação em 10 dias. Se depois aparecer vício, o Presidente comunica e substitui os autógrafos; se a lei já foi promulgada, pede ao Governador a retificação (art. 211).'})
+  ]});
+}
+function governador(){
+  return nd('Governador',{k:'exec',n:'15 dias úteis do recebimento',s:LO('74'),d:'Aprovado o projeto, o Governador sanciona e promulga, ou veta no todo ou em parte.',c:[
+    nd('Sanção',{k:'fim',n:'expressa, ou tácita após 15 dias úteis de silêncio',s:LO('74, §3º')}),
+    nd('Veto total ou parcial',{n:'motivos à Câmara em 48 h · só artigo, parágrafo, inciso ou alínea inteiros',s:LO('74, §§1º–2º'),c:[
+      nd('Lido e posto no quadro de vetos',{n:'ordem do dia da sessão ordinária seguinte',s:RI('212')}),
+      nd('Apreciação em 30 dias corridos',{n:'sem parecer nem relatório · pode ser em bloco, com destaques',s:RI('213, §§1º–3º'),d:'O veto é apreciado sem parecer ou relatório, de preferência em sessão convocada para isso, com discussão conjunta e votação em bloco acordada pelos líderes. No texto de 2000 a CCJ fazia um relatório de veto em 15 dias.'}),
+      nd('Depois de 30 dias: rito de urgência',{n:'sobrestá as demais proposições',s:RI('213, §4º'),d:'Esgotado o prazo, aplicam-se as regras de urgência, e a LODF manda o veto à ordem do dia da sessão imediata, sobrestando as demais proposições (art. 74, §5º).'}),
+      nd('Rejeição só por maioria absoluta (13)',{n:'votação ostensiva',s:RI('213')}),
+      nd('Veto mantido → parte vetada arquivada',{k:'nao',s:LO('74')}),
+      nd('Veto rejeitado → promulgação',{n:'Governador em 48 h · senão Presidente · depois 1º Vice',s:RI('213, §§5º–6º')})
+    ]})
+  ]});
+}
+function saidas(){
+  return nd('Saídas sem decisão',{k:'nao',n:'retirada · prejudicada · duas legislaturas',s:RI('153–154; 187'),d:'Três caminhos tiram uma proposição de tramitação sem que o Plenário decida o mérito. '+notaF077(),c:[
+    nd('Retirada',{n:'pelo autor ou maioria dos subscritores · Plenário vota se há parecer favorável',s:RI('153'),d:'Sem parecer favorável de comissão de mérito, o Presidente defere a retirada; com parecer favorável, o Plenário decide.'}),
+    nd('Prejudicada',{n:'Presidente declara · recurso em 5 dias · arquivo definitivo',s:RI('187'),d:'Entre outras hipóteses: matéria de projeto rejeitado na mesma sessão legislativa; idêntica a outra já em tramitação ou a outra julgada inconstitucional; que perdeu a oportunidade; inadmitida sem recurso. O autor recorre ao Plenário em 5 dias, ouvida a CCJ. Prejudicada, é arquivada em definitivo.'}),
+    nd('Duas legislaturas → arquivo',{n:'automático ao fim da segunda legislatura',s:RI('154'),d:'A proposição tramita por no máximo duas legislaturas e depois é arquivada. O Presidente arquiva e defere o desarquivamento (art. 44, II, i).',c:[
+      nd('Desarquivamento',{k:'mesa',n:'1/3 dos deputados, em 60 dias · só por mais 1 legislatura',s:RI('154, parágrafo único; 152, II, g')}),
+      nd('Discussão pode ser reiniciada',{n:'emendas reabertas, a pedido de deputado',s:RI('191, §2º')}),
+      nd('Até 2024: sobrestamento',{n:'o texto de 2000 separava continuar, sobrestar e arquivar',s:M('137–138'),d:'No texto de 2000, ao fim da legislatura, continuavam as proposições com parecer favorável de mérito, já aprovadas em algum turno, de iniciativa popular ou de outro Poder; as demais ficavam sobrestadas até o autor pedir a retomada; as com duas legislaturas iam ao arquivo.'})
+    ]})
+  ]});
+}
+
+function treePL(){
+  return nd('PL — Projeto de Lei',{k:'esp',id:'PL',n:'lei ordinária'+vol('PL'),s:fonteVol('PL'),d:'Dispõe sobre matérias que exigem a sanção do Governador e não são reservadas à lei complementar (RI art. 138).',c:[
+    iniciativaLei(), apresentacao(), comissoesLei(),
+    plenario({turnos:2, quorum:'maioria de votos, presente a maioria absoluta (13)', qs:RI('196')}),
+    redacaoFinal('Autógrafo ao Governador'), governador(),
+    nd('Lei ordinária',{k:'fim',n:'publicada no DODF · PLe: “Sanção Veto ou Promulgação”',s:S.ple,d:'A norma aparece no PLe como documento “Lei”, com o marcador “Sanção Veto ou Promulgação”. O Observatório mostra o desfecho como “obteve resultado”.'}),
+    saidas()
+  ]});
+}
+function treePLC(){
+  return nd('PLC — Projeto de Lei Complementar',{k:'esp',id:'PLC',n:'lei complementar'+vol('PLC'),s:fonteVol('PLC'),d:'Mesmo rito do projeto de lei, com maioria absoluta e votação nominal. Só existe nos casos que a Lei Orgânica prevê (RI art. 138, parágrafo único).',c:[
+    nd('Matérias reservadas',{k:'ini',n:'LODF art. 75, parágrafo único — “entre outras”',s:LO('75'),c:[
+      nd('TCDF, PGDF e Defensoria Pública',{s:LO('75, I, III, XII')}),
+      nd('Servidores: regime jurídico e previdência',{s:LO('75, II, VII')}),
+      nd('Código tributário do DF',{s:LO('75, IV')}),
+      nd('Sistema de educação · Vice-Governador',{s:LO('75, V–VI')}),
+      nd('PDOT, LUOS, PPCUB, plano de desenvolvimento local',{s:LO('75, VIII–XI')})
+    ]}),
+    iniciativaLei(), apresentacao(), comissoesLei(),
+    plenario({turnos:2, quorum:'maioria absoluta (13 de 24) em cada turno · voto nominal', qs:LO('75'), qd:'As leis complementares são aprovadas por maioria absoluta dos deputados e recebem numeração distinta das ordinárias.'}),
+    redacaoFinal('Autógrafo ao Governador'), governador(),
+    nd('Lei complementar',{k:'fim',n:'numeração própria · PLe: “Lei Complementar”',s:LO('75')}),
+    saidas()
+  ]});
+}
+function treePELO(){
+  return nd('PELO — Proposta de Emenda à Lei Orgânica',{k:'esp',id:'PELO',n:'emenda à LODF'+vol('PELO'),s:fonteVol('PELO'),d:'Altera a Lei Orgânica em regime especial: CCJ antes do mérito, emendas só com 1/3, dois turnos com 3/5 e promulgação pela Mesa, sem Governador.',c:[
+    nd('Iniciativa',{k:'ini',s:RI('137'),c:[
+      nd('1/3 dos deputados (8 de 24)',{s:RI('137, I')}),
+      nd('Governador',{s:RI('137, II')}),
+      nd('Cidadãos — 1% do eleitorado',{n:'em 3 zonas, com ao menos 0,3% de cada uma',s:RI('137, III; 270, I')}),
+      nd('Limites',{n:'não fere a Constituição · não em intervenção, estado de defesa ou de sítio',s:RI('137, §§1º e 3º')})
+    ]}),
+    nd('Apresentação',{k:'mesa',n:'etapa no PLe: APRESENTACAO · regime especial, nunca urgência',s:RI('146; 157, §2º')}),
+    nd('Emendas',{k:'mesa',n:'10 dias · cada uma com 1/3 dos deputados',s:RI('216'),d:'Antes de ir à CCJ, a proposta recebe emendas por 10 dias, cada uma subscrita por 1/3. Fora desse período, só emenda de relator.'}),
+    nd('CCJ — admissibilidade, antes do mérito',{k:'com',n:'20 dias',s:RI('215; 217'),c:[
+      nd('Inadmitida → recurso ao Plenário',{n:'1/8 dos deputados, em 5 dias',s:RI('217, §1º')}),
+      nd('Relator só corrige vícios',{n:'constitucionalidade, técnica, redação — sem mudar o mérito',s:RI('218')})
+    ]}),
+    nd('Comissões de mérito',{k:'com',n:'20 dias, em comum',s:RI('217, §2º'),c:[
+      nd('Emenda de relator volta à CCJ',{n:'10 dias, só admissibilidade',s:RI('219')})
+    ]}),
+    nd('Plenário',{k:'plen',n:'etapa no PLe: PLENARIO · dois turnos',s:RI('220'),c:[
+      nd('1º turno — 3/5 dos deputados (15 de 24)',{n:'voto nominal',s:RI('220, IV')}),
+      nd('Interstício obrigatório de 10 dias corridos',{s:RI('220, I')}),
+      nd('2º turno — 3/5 dos deputados (15 de 24)',{n:'voto nominal',s:RI('220, IV')}),
+      nd('Emenda de plenário',{n:'1/3 dos deputados · volta à CCJ e ao mérito por 5 dias',s:RI('220, II–III')}),
+      nd('Era 2/3 (16) até 2024',{n:'ELO nº 131/2024 · STF, ADI 7.205',s:LO('70, §1º'),d:'O texto original exigia dois terços. O STF declarou a expressão inconstitucional na ADI 7.205 (12/07/2022), e a Emenda à Lei Orgânica nº 131, de 23/05/2024 — a PELO nº 2/2023 —, fixou 3/5.'}),
+      nd('Rejeitada ou prejudicada',{k:'nao',n:'não volta na mesma sessão legislativa',s:RI('137, §2º')})
+    ]}),
+    redacaoFinal('Publicação da redação final','abre o prazo de 15 dias para a Mesa promulgar',RI('208, IV; 221'),'Publicada a redação final no Sistema de Publicações Legislativas, corre o prazo de 15 dias corridos para a Mesa promulgar a emenda. Não há autógrafo ao Governador.'),
+    nd('Mesa promulga',{k:'mesa',n:'15 dias corridos da publicação da redação final',s:RI('221'),d:'A emenda é promulgada pela Mesa Diretora, com número de ordem (LODF art. 70, §2º). Não há sanção nem veto.'}),
+    nd('Emenda à Lei Orgânica',{k:'fim',n:'numerada em ordem · PLe: “Emenda à Lei Orgânica”',s:S.ple}),
+    saidas()
+  ]});
+}
+function treePDL(){
+  return nd('PDL — Projeto de Decreto Legislativo',{k:'esp',id:'PDL',n:'decreto legislativo'+vol('PDL'),s:fonteVol('PDL'),d:'Matéria de competência privativa da Câmara que não é de interesse interno (RI art. 139). Não vai ao Governador.',c:[
+    nd('Objeto',{k:'ini',s:RI('139'),d:'O Regimento define o PDL pela exclusão: competência privativa da Câmara, fora do interesse interno. As hipóteses vêm do Glossário da CLDF e do rito das contas.',c:[
+      nd('Sustar atos normativos do Executivo',{s:S.gl}),
+      nd('Licença do Governador',{s:S.gl}),
+      nd('Indicação de membros do TCDF',{s:S.gl}),
+      nd('Aprovar titulares indicados pelo Governador',{n:'arguição pública · no PLe, a mensagem é um PROC',s:RI('253')}),
+      nd('Escolher autoridades da competência da Câmara',{n:'eleição ostensiva entre indicados',s:RI('254')}),
+      nd('Títulos de cidadão honorário e benemérito',{n:'maioria absoluta · até 10 por deputado por sessão legislativa',s:RI('244–245'),d:'O título é concedido por decreto legislativo aprovado pela maioria absoluta dos deputados. Cada deputado pode ser primeiro signatário de no máximo 10 títulos efetivamente aprovados por sessão legislativa; a Mesa também pode propor, dentro do mesmo limite. O homenageado precisa ter nascido no DF (benemérito) ou fora dele (honorário), ter feito trabalho de relevante interesse para a população do DF, ter notório reconhecimento público e reputação ilibada; a proposição traz o currículo. Não há prazo de emendas (art. 163, §4º). A entrega é sempre em sessão solene, que independe de requerimento (art. 130, §1º, II). A competência vem da LODF, art. 60, XLI. A Res. nº 334/2023 — que exigia residência de mais de 4 anos no DF, limitava a 8 projetos por deputado e vedava concessões de 30 dias antes a 30 dias depois das eleições — foi revogada pela Res. nº 353/2024 (art. 6º, XXXVII). O Regimento de 2024 não traz vedação eleitoral. O Glossário da CLDF ainda cita a norma revogada.'}),
+      nd('Contas do Governador e do TCDF',{n:'rito próprio na CEOF · no PLe, a mensagem é um PROC',s:RI('230–236'),c:[
+        nd('Só a CEOF examina',{s:RI('232')}),
+        nd('Cidadãos podem impugnar pelo portal',{n:'contas ficam públicas até o fim do ano',s:RI('231')}),
+        nd('TCDF dá parecer prévio',{n:'rejeição abre 30 dias ao Governador',s:RI('234')}),
+        nd('CEOF redige o PDL',{n:'vai ao Plenário sem outro parecer',s:RI('235–236')})
+      ]})
+    ]}),
+    apresentacao(), comissoesLei(),
+    plenario({turnos:1, quorum:'maioria de votos, presente a maioria absoluta (13)', qs:RI('196')}),
+    redacaoFinal('Autógrafo à promulgação'),
+    nd('Presidente da CLDF promulga',{k:'mesa',n:'10 dias · na falta dele, o 1º Vice',s:RI('210, §1º'),d:'O decreto legislativo não depende de sanção.'}),
+    nd('Decreto Legislativo',{k:'fim',n:'PLe: “Decreto Legislativo”',s:S.ple}),
+    saidas()
+  ]});
+}
+function treePR(){
+  return nd('PR — Projeto de Resolução',{k:'esp',id:'PR',n:'resolução'+vol('PR'),s:fonteVol('PR'),d:'Regula matérias de interesse interno da Câmara (RI art. 139, parágrafo único). Não vai ao Governador.',c:[
+    nd('Objeto e iniciativa',{k:'ini',s:RI('139'),c:[
+      nd('Regimento Interno e Código de Ética',{n:'alterar o RI exige 1/3 de subscritores',s:RI('152, II, f')}),
+      nd('Polícia interna, cargos e estrutura',{s:RI('181, IV')}),
+      nd('Deputado, comissão ou Mesa',{s:RI('151')})
+    ]}),
+    apresentacao(), comissoesLei(),
+    plenario({turnos:1, quorum:'maioria de votos, presente a maioria absoluta (13)', qs:RI('196'), extra:[
+      nd('Dois turnos em 4 matérias',{n:'Regimento e Código de Ética · polícia interna · cargos',s:RI('181, IV')})
+    ]}),
+    redacaoFinal('Autógrafo à promulgação'),
+    nd('Presidente da CLDF promulga',{k:'mesa',n:'10 dias · na falta dele, o 1º Vice',s:RI('210, §1º')}),
+    nd('Resolução',{k:'fim',n:'efeito interno · PLe: “Resolução”',s:S.ple}),
+    saidas()
+  ]});
+}
+function treeIND(){
+  return nd('IND — Indicação',{k:'esp',id:'IND',n:'sugestão ao Executivo'+vol('IND'),s:fonteVol('IND'),d:'A Câmara sugere ao Executivo uma providência, um ato administrativo ou de gestão, ou o envio de projeto de iniciativa exclusiva dele (RI art. 140). É a classe mais numerosa entre os titulares e se resolve numa comissão.',c:[
+    nd('Objeto',{k:'ini',s:RI('140'),c:[
+      nd('Providência, ato administrativo ou de gestão',{s:RI('140')}),
+      nd('Envio de projeto de iniciativa exclusiva',{n:'o que o deputado não pode propor',s:RI('140'),d:'Nas matérias de iniciativa privativa do Governador (LODF art. 71, §1º), um projeto de deputado não pode ser deliberado. A indicação é o caminho regimental: pede ao Executivo que mande o projeto.'})
+    ]}),
+    nd('Numerada e publicada',{k:'mesa',n:'etapa no PLe: APRESENTACAO',s:RI('140, §1º')}),
+    nd('Comissão de mérito delibera',{k:'com',n:'maioria, presente a maioria absoluta dos membros',s:RI('140, §1º; 172, I'),d:'Distribuída à comissão de mérito, a indicação é votada ali. No texto de 2000 isso ocorria na primeira reunião após a entrada, com votação em bloco (Manual de 2011); o texto de 2024 não fixa prazo próprio.',c:[
+      nd('Aprovada: presidente da comissão encaminha',{n:'à autoridade competente',s:RI('140, §2º; 89, XIV')}),
+      nd('Rejeitada → arquivo',{k:'nao',s:S.ple})
+    ]}),
+    nd('Não vai ao Plenário nem ao Governador',{k:'mesa',s:RI('140')}),
+    nd('Recomendação sem força de lei',{k:'fim',n:'o Executivo não é obrigado a atender',s:S.site})
+  ]});
+}
+function treeMO(){
+  return nd('MO — Moção',{k:'esp',id:'MO',n:'posição da Câmara'+vol('MO'),s:fonteVol('MO'),d:'A Câmara se pronuncia para manifestar louvor, pesar ou repúdio, ou hipotecar solidariedade, sobre determinado evento (RI art. 141). Não passa por comissão.',c:[
+    nd('Objeto',{k:'ini',s:RI('141'),c:[
+      nd('Louvor · repúdio · solidariedade',{n:'ato público ou acontecimento de alta significação',s:RI('141, II')}),
+      nd('Pesar',{n:'luto oficial ou morte de quem teve alto cargo ou relevo',s:RI('141, II')})
+    ]}),
+    nd('Duas partes obrigatórias',{k:'mesa',n:'pedido justificado · texto da manifestação',s:RI('141, I')}),
+    nd('Sem parecer de comissão',{k:'com',n:'por isso pode ir a sessão virtual',s:RI('141, III; 129')}),
+    nd('Plenário delibera',{k:'plen',n:'sem discussão · só o autor e 1 contrário encaminham, 5 min',s:RI('141, III; 142, parágrafo único'),c:[
+      nd('Aprovada: enviada ao destinatário',{s:S.nada,u:true,n:'nenhuma norma publicada · pedir pela LAI',d:'Nenhuma norma publicada diz quem expede a moção aprovada, a quem, em que forma, prazo ou limite. Uma pesquisa externa em 25/09/2026 procurou em atos da Mesa, portarias, normas do Cerimonial e do PLe e não achou. O mais próximo é o art. 44, §1º, V: o Presidente assina a correspondência da Câmara. O registro também não mostra o desfecho: dos '+fmt(N.MO)+' atos de apresentação de moção por titulares em '+JAN.MO[0]+'–'+JAN.MO[1]+', '+fmt(etapaDe('MO','Apresentação'))+' continuam na etapa “Apresentação” do PLe e só '+fmt(etapaDe('MO','Sanção Veto ou Promulgação'))+' chegaram a “Sanção Veto ou Promulgação”. O pedido de informação vai à Ouvidoria, que é o Serviço de Informações ao Cidadão (art. 51, §1º, IV), dirigido à Secretaria Legislativa, ao Gabinete da Mesa e ao Cerimonial. O texto do pedido está na issue #258 do repositório maximusminus/cldf.'}),
+      nd('Rejeitada → arquivo',{k:'nao',s:S.ple})
+    ]}),
+    nd('Manifestação sem força de norma',{k:'fim',s:S.site})
+  ]});
+}
+function treeREQ(){
+  return nd('REQ — Requerimento',{k:'esp',id:'REQ',n:'pedido no processo'+vol('REQ'),s:fonteVol('REQ'),d:'Pedido escrito de deputado. Três vias, conforme quem decide: o Presidente, a Mesa ou o Plenário. Requerimentos dispensam justificação (RI art. 149, §3º).',c:[
+    nd('Presidente decide sozinho',{k:'mesa',n:'RI art. 44, I, h, itens 1 a 12',s:RI('44, I, h'),d:'Desde a Res. nº 358/2025, as decisões sobre sessão solene, tramitação conjunta, desapensamento, retirada sem parecer favorável e arquivamento ou desarquivamento podem ser delegadas (art. 283).',c:[
+      nd('Palavra · leitura · observância do Regimento',{s:RI('44, I, h, 1–4')}),
+      nd('Retirada de proposição sem parecer favorável',{s:RI('44, I, h, 5; 153, §1º')}),
+      nd('Inclusão ou inversão na ordem do dia',{s:RI('44, I, h, 7–9')}),
+      nd('Destaque · verificação de votação',{s:RI('44, I, h, 10–11')}),
+      nd('Requisição de documentos',{s:RI('44, I, h, 12')}),
+      nd('Tramitação conjunta',{n:'decidida em 5 dias, ou de imediato',s:RI('155, §3º')}),
+      nd('Deferido ou indeferido',{k:'fim',s:RI('44')})
+    ]}),
+    nd('Mesa Diretora decide',{k:'mesa',n:'informação a autoridades · sessões',s:RI('41, §1º, XI; 42'),c:[
+      nd('Pedido de informação',{n:'Mesa decide em 10 dias · resposta em 30 dias',s:RI('42'),d:'Admite-se se trata de ato ou fato sob competência ou supervisão da autoridade e de matéria sujeita à deliberação ou fiscalização da Câmara, sem pedir providência, consulta ou sugestão. Se já houver a informação, o deputado recebe cópia. Não prestada em 30 dias, aplica-se a Lei Orgânica.'}),
+      nd('Não realizar sessão · sessão solene · audiência pública',{s:RI('41, §1º, XI'),d:'A audiência pública (alínea c) foi incluída pela Res. nº 358/2025, sem prejuízo de a matéria ser deliberada por comissão ou pelo Plenário.'}),
+      nd('Indeferido → recurso ao Plenário',{n:'1/8 dos deputados, em 5 dias',s:RI('144, III; 152, I, a')})
+    ]}),
+    nd('Plenário vota',{k:'plen',n:'sem discussão · autor e 1 contrário encaminham',s:RI('142'),c:[
+      nd('Urgência',{n:'1/3 subscreve · 2/3 aprovam',s:RI('159'),d:'O texto do REQ diz de qual proposição se trata; o campo regimeUrgencia da proposição não diz se o regime foi de fato aplicado.'}),
+      nd('Convocação de secretário e autoridades',{s:RI('142, II')}),
+      nd('Sessão extraordinária · audiência pública · comissão geral',{s:RI('142, III, XV, XVI')}),
+      nd('Retirada de proposição com parecer favorável',{s:RI('142, IV; 153, §1º')}),
+      nd('Adiamento · preferência · destaque · encerramento',{s:RI('142, VII–XIV')}),
+      nd('Desarquivamento',{n:'1/3 dos deputados, em 60 dias',s:RI('152, II, g; 154')}),
+      nd('CPI',{n:'criação com 1/3 · maioria absoluta se já houver 2',s:RI('152, II, b; III, b')}),
+      nd('Aprovado ou rejeitado',{k:'fim',s:RI('142')})
+    ]})
+  ]});
+}
+function treeEMENDA(){
+  return nd('Emenda',{k:'esp',id:'EMENDA',n:'proposição acessória · RI art. 143',s:RI('143'),d:'Proposição acessória que altera a redação da principal. No PLe entra como documento “Emenda” ou “Subemenda” ligado à principal, numerado dentro dela pela ordem de entrada (art. 146, §2º).',c:[
+    nd('Tipos',{k:'ini',s:RI('143, §1º'),c:[
+      nd('Aditiva',{n:'acrescenta dispositivo',s:RI('143, §1º, I')}),
+      nd('Aglutinativa',{n:'funde emendas, ou emenda e texto',s:RI('143, §1º, II')}),
+      nd('Modificativa',{n:'dá nova redação a um dispositivo',s:RI('143, §1º, III')}),
+      nd('Substitutiva',{n:'altera substancialmente uma parte',s:RI('143, §1º, IV')}),
+      nd('Supressiva',{n:'retira parte da proposição',s:RI('143, §1º, V')})
+    ]}),
+    nd('Denominações',{k:'ini',s:RI('143, §2º'),c:[
+      nd('De plenário',{n:'apresentada após a inclusão na ordem do dia',s:RI('143, §2º, I')}),
+      nd('De redação',{n:'sana vício de linguagem ou técnica',s:RI('143, §2º, II')}),
+      nd('Subemenda',{n:'emenda a outra emenda',s:RI('143, §2º, III')}),
+      nd('Substitutivo',{n:'reescreve a proposição, ou substitui as que tramitam juntas',s:RI('143, §2º, IV'),d:'O autor do substitutivo não vira autor da proposição (§3º). Desde a Res. nº 358/2025, o substitutivo é numerado em série própria (art. 146, §2º, V).'}),
+      nd('Substitutivo de comissão',{n:'do relator, aprovado na comissão',s:RI('143, §2º, V')})
+    ]}),
+    nd('Quando',{k:'mesa',s:RI('163; 179'),c:[
+      nd('Dois prazos de 5 dias nas comissões',{n:'antes do mérito e antes da admissibilidade',s:RI('163')}),
+      nd('Fora deles, só emenda de relator',{s:RI('163, §1º')}),
+      nd('Em plenário: da inclusão ao anúncio',{n:'no 2º turno, só com 1/8',s:RI('179')}),
+      nd('Aglutinativa só em plenário',{n:'pelos autores das emendas ou maioria absoluta',s:RI('180')}),
+      nd('PELO: 10 dias, cada uma com 1/3',{s:RI('216; 220, II')}),
+      nd('Orçamento: só na CEOF',{n:'prazo mínimo de 10 dias · número e valor por deputado fixados pelos líderes',s:RI('228'),d:'Emendas ao PPA, LDO, LOA e créditos adicionais são apresentadas só à CEOF, após o parecer preliminar. O Colégio de Líderes fixa, a cada ano, o número e o valor máximo por deputado. O Observatório publica essas emendas na aba Emendas (ato 6, “emendou o orçamento”).'})
+    ]}),
+    nd('Limites',{k:'nao',n:'sem aumento de despesa em projeto do Governador · pertinência temática',s:RI('148, VII')}),
+    nd('Votação',{k:'plen',s:RI('205'),c:[
+      nd('Aprovada com o texto-base',{n:'se admitida, não destacada e aprovada em todo o mérito',s:RI('205, §2º, I')}),
+      nd('Inadmitida na CCJ ou CEOF não vai a voto',{n:'salvo destaque de 1/8 no prazo de recurso',s:RI('205, IV; 186, §2º')}),
+      nd('Divergência de pareceres: destacada automaticamente',{s:RI('186, §1º')})
+    ]}),
+    nd('Incorporada na redação final',{k:'fim',s:RI('206')})
+  ]});
+}
+function treeREC(){
+  return nd('REC — Recurso',{k:'esp',id:'REC',n:'contra decisão'+vol('REC'),s:fonteVol('REC'),d:'Contesta decisão do Presidente, de presidente de comissão, da Mesa ou parecer terminativo, sempre ao Plenário (RI art. 144). Recursos administrativos são outra coisa: a Mesa os julga em última instância (art. 41).',c:[
+    nd('Contra o Presidente da Câmara',{k:'ini',n:'não recebeu proposição · prejudicialidade · questão de ordem · ata · redação final · tramitação conjunta',s:RI('144, I')}),
+    nd('Contra presidente de comissão',{k:'ini',n:'em questão de ordem',s:RI('144, II')}),
+    nd('Contra indeferimento pela Mesa',{k:'ini',n:'pedido de informação, sessões · 1/8 dos deputados',s:RI('144, III; 152, I, a')}),
+    nd('Contra inadmissibilidade na CCJ ou CEOF',{k:'ini',n:'1/8 dos deputados (3)',s:RI('144, IV; 152, I, a')}),
+    nd('Prazo: 5 dias',{k:'mesa',n:'contraditando objetivamente a decisão',s:RI('144, §1º')}),
+    nd('Plenário decide',{k:'plen',n:'CCJ opina só nos casos I a, b, c e II',s:RI('144, §2º'),c:[
+      nd('Provido: decisão reformada, tramitação prossegue',{k:'fim',s:RI('144, §2º, IV')}),
+      nd('Improvido',{k:'nao',s:RI('144, §2º')})
+    ]})
+  ]});
+}
+function treeQO(){
+  return nd('QO — Questão de Ordem',{k:'esp',id:'QO',n:'dúvida regimental'+vol('QO'),s:fonteVol('QO'),d:'Toda dúvida sobre a interpretação do Regimento ou de outra norma aplicável à matéria em discussão (RI art. 132). Não é uma das dez espécies do art. 136; o PLe a registra à parte.',c:[
+    nd('Levantada por deputado',{k:'ini',n:'5 min · indicando o dispositivo · na ordem do dia, só sobre a matéria em pauta',s:RI('132, §§1º–4º')}),
+    nd('Um deputado fala contra',{k:'plen',n:'5 min',s:RI('132, §5º')}),
+    nd('Presidente decide',{k:'mesa',s:RI('132, §5º')}),
+    nd('Recurso ao Plenário',{k:'plen',n:'sem efeito suspensivo · CCJ opina em 5 dias',s:RI('132, §§6º–7º')}),
+    nd('Em comissão: presidente da comissão decide',{k:'com',n:'recurso ao Plenário',s:RI('172, §2º; 144, II')}),
+    nd('Decisões registradas e indexadas',{k:'fim',n:'a Mesa propõe mudança no RI antes do fim do biênio',s:RI('132, §§8º–9º')})
+  ]});
+}
+function treeIRF(){
+  return nd('IRF — Impugnação à Redação Final',{k:'esp',id:'IRF',n:'incidente após a aprovação · espécie própria no PLe',s:S.ple,d:'Contesta a redação final publicada quando ela não corresponde ao que o Plenário aprovou.',c:[
+    nd('Redação final publicada',{k:'mesa',s:RI('208, IV')}),
+    nd('Deputado impugna',{k:'ini',n:'5 dias da publicação · pede retificação',s:RI('208, §1º, II')}),
+    nd('Presidente decide',{k:'mesa',s:RI('208, §3º'),c:[
+      nd('Deferida: texto corrigido',{k:'fim',n:'autógrafo já enviado é substituído',s:RI('211')}),
+      nd('Indeferida → recurso ao Plenário',{k:'plen',s:RI('144, I, e')})
+    ]}),
+    nd('Vício achado depois: o Presidente corrige',{k:'mesa',n:'havendo impugnação, o Plenário decide · vedado mudar o mérito',s:RI('209')})
+  ]});
+}
+function treeSUG(){
+  return nd('SUG — Sugestão Legislativa',{k:'esp',id:'SUG',n:'participação da sociedade'+vol('SUG'),s:fonteVol('SUG'),d:'Sugestão da sociedade civil recebida pela Comissão de Defesa dos Direitos Humanos, Cidadania e Legislação Participativa (RI art. 68, III). Não é uma das dez espécies do art. 136: só vira proposição se a comissão a adotar.',c:[
+    nd('Quem pode apresentar',{k:'ini',s:RI('68, III'),c:[
+      nd('Entidade organizada da sociedade civil',{n:'exceto partido político',s:RI('68, III, a')}),
+      nd('5 mil cidadãos com domicílio eleitoral no DF',{n:'por ferramenta eletrônica, na forma de ato da Mesa',s:RI('68, III, b')})
+    ]}),
+    nd('Ferramenta eletrônica: ideia legislativa',{k:'mesa',n:'vira SUG ao atingir 5.000 apoios · não é iniciativa popular',s:S.amd300,d:'Pelo AMD nº 300/2025, a ideia legislativa cadastrada na ferramenta eletrônica converte-se em sugestão legislativa quando obtém a subscrição de 5.000 cidadãos com domicílio eleitoral no DF (art. 4º, parágrafo único), e é cadastrada com a sigla SUG (art. 14, §1º). As regras de iniciativa popular do art. 270 do Regimento não se aplicam a ela (art. 22). Segundo a mesma pesquisa, a comissão emite parecer em até 4 reuniões. Uma segunda pesquisa cita o mesmo ato com outro texto (art. 2º, com prazo de um ano para os apoios); as duas versões não batem, e o texto do AMD precisa ser lido na fonte.'}),
+    nd('Comissão de Direitos Humanos, Cidadania e Legislação Participativa',{k:'com',s:RI('68'),c:[
+      nd('Parecer favorável: vira proposição da comissão',{k:'fim',n:'segue o rito da espécie',s:RI('68, §2º')}),
+      nd('Parecer contrário: arquivo definitivo',{k:'nao',s:RI('68, §2º')})
+    ]})
+  ]});
+}
+function treePROC(){
+  return nd('PROC — Processo',{k:'esp',id:'PROC',n:'mensagens do Governador com rito próprio'+vol('PROC','em'),s:fonteVol('PROC'),d:'“Processo” é o nome que o PLe dá às mensagens do Governador sobre matérias que o Regimento trata em rito próprio. Os '+fmt(N.PROC)+' registrados no ledger do projeto em '+JAN.PROC[0]+'–'+JAN.PROC[1]+' são de três tipos: homologação de convênios ICMS, prestação de contas anual do GDF e indicação de nomes para cargos. Por ano de apresentação: '+porAno('PROC')+'. O PLe o registra como espécie própria, com relator, mas ele não está entre as dez espécies do art. 136, e nenhuma norma publicada cria essa classificação: o Regimento só distingue “proposições e processos” (art. 44, II, c) e manda ler no expediente as mensagens de autoria externa (art. 116, I). A mensagem é lida, vai à comissão, e a comissão redige a proposição que o Plenário vota. O ato ou manual que define as espécies do PLe foi pedido pela LAI: o texto está na issue #258 do repositório maximusminus/cldf.',c:[
+    nd('Homologação de convênio ICMS',{k:'com',n:'CEOF aprova e redige a proposição · depois CCJ',s:RI('243'),d:'Os convênios do art. 135, §6º, da Lei Orgânica só produzem efeito no DF depois de homologados pela Câmara, a pedido do Governador. A CEOF, aprovando, elabora a proposição decorrente e a envia à CCJ.',c:[
+      nd('Benefício fiscal: 2/3 dos deputados (16)',{n:'isenção, anistia, remissão ou incentivo',s:RI('243, §2º'),d:'Se o convênio conceder isenção, anistia, remissão, benefício ou incentivo fiscal, a aprovação exige 2/3 dos deputados (LODF art. 131, I). O mesmo artigo proíbe concedê-los no último exercício da legislatura, salvo calamidade.'}),
+      nd('Ex.: PROC 88/2022',{n:'Convênio ICMS 178/2021',s:S.ple})
+    ]}),
+    nd('Prestação de contas do Governador',{k:'com',n:'só a CEOF · parecer prévio do TCDF · PDL da CEOF',s:RI('230–236'),d:'As contas são lidas, publicadas e ficam no portal até o fim do ano para impugnação por cidadãos. A CEOF examina, manda ao TCDF para parecer prévio, decide o parecer definitivo no início do ano seguinte e redige o projeto de decreto legislativo, que vai ao Plenário sem outro parecer.',c:[
+      nd('Contas não prestadas: tomada de contas',{n:'pela CEOF, em 90 dias',s:RI('237–242')}),
+      nd('Ex.: PROC 89/2022',{n:'contas do GDF de 2021',s:S.ple})
+    ]}),
+    nd('Indicação de autoridade pelo Governador',{k:'com',n:'arguição pública em 10 dias · parecer com PDL',s:RI('253'),d:'A mensagem é lida e vai à comissão competente, que convoca o indicado em 10 dias da leitura, pode fazer audiência pública e investigar alegações, e delibera em votação ostensiva. O parecer segue com projeto de decreto legislativo ao Plenário; o resultado é comunicado ao Governador.',c:[
+      nd('Ex.: PROC 90/2022 e PROC 4/2023',{n:'direção de instituto de gestão da saúde',s:S.ple}),
+      nd('Ex.: PROC 92/2022',{n:'diretoria de agência reguladora',s:S.ple})
+    ]}),
+    nd('Desfecho: decreto legislativo',{k:'fim',n:'ou comunicação do resultado ao Governador',s:RI('236; 253, V–VI')})
+  ]});
+}
+
+var TREES = {PL:treePL, PLC:treePLC, PELO:treePELO, PDL:treePDL, PR:treePR, IND:treeIND, MO:treeMO, REQ:treeREQ, EMENDA:treeEMENDA, REC:treeREC, QO:treeQO, IRF:treeIRF, SUG:treeSUG, PROC:treePROC};
+var FAM = [
+  {name:'Vão ao Governador', sub:'sanção ou veto; dois turnos', ids:['PL','PLC']},
+  {name:'A própria Câmara promulga', sub:'sem sanção', ids:['PELO','PDL','PR','PROC']},
+  {name:'Não geram norma', sub:'posição, pedido ou sugestão', ids:['IND','MO','REQ']},
+  {name:'Incidentes de outra proposição', sub:'acessórias e recursos', ids:['EMENDA','REC','QO','IRF','SUG']}
+];
+var NAMES = {PL:'Projeto de Lei',PLC:'Projeto de Lei Complementar',PELO:'Proposta de Emenda à Lei Orgânica',PDL:'Projeto de Decreto Legislativo',PR:'Projeto de Resolução',IND:'Indicação',MO:'Moção',REQ:'Requerimento',EMENDA:'Emenda',REC:'Recurso',QO:'Questão de Ordem',IRF:'Impugnação à Redação Final',SUG:'Sugestão Legislativa',PROC:'Processo (mensagem do Governador)'};
+var OVER = {
+  PL:'2 turnos · maioria de votos · sanção do Governador',
+  PLC:'2 turnos · maioria absoluta · sanção do Governador',
+  PELO:'CCJ antes do mérito · 2 turnos · 3/5 · Mesa promulga',
+  PDL:'turno único · Presidente promulga',
+  PR:'turno único (2 se altera o RI) · Presidente promulga',
+  IND:'comissão de mérito delibera · segue ao Executivo',
+  MO:'sem comissão · Plenário delibera',
+  REQ:'Presidente, Mesa ou Plenário decidem',
+  EMENDA:'dois prazos de 5 dias · votada com a principal',
+  REC:'5 dias · Plenário decide',
+  QO:'Presidente decide · recurso ao Plenário',
+  IRF:'5 dias · Presidente decide · recurso',
+  SUG:'entidades ou 5 mil cidadãos · comissão decide',
+  PROC:'mensagens do Governador: convênios ICMS, contas, indicações'
+};
+function treeOverview(){
+  var r = nd('Proposição na CLDF',{k:'root',n:'Res. nº 353/2024 (RI) + Lei Orgânica',s:RI('136'),d:'Visão geral: as classes de proposição que o PLe da CLDF conhece, agrupadas por quem conclui o rito. Clique numa classe para abrir o seu caminho.'});
+  r.c = FAM.map(function(f){
+    return nd(f.name,{k:'fam',n:f.sub,c:f.ids.map(function(id){
+      return nd(id+' — '+NAMES[id],{k:'esp',id:id,n:OVER[id]+(N[id]!==null?' · '+fmt(N[id]):''),s:N[id]!==null?S.obs:S.ple,d:'Abrir o rito de '+NAMES[id]+'.',c:[],open:true});
+    })});
+  });
+  return r;
+}
+
+/* ---------- medição de texto ---------- */
+var canvas = document.createElement('canvas'), ctx = canvas.getContext('2d');
+function tw(text, font){ ctx.font = font; return ctx.measureText(text).width; }
+var F_LBL = '600 12.5px "IBM Plex Sans", "Segoe UI", Arial, sans-serif';
+var F_NT  = '400 10.5px "IBM Plex Sans", "Segoe UI", Arial, sans-serif';
+var F_SRC = '500 9px "IBM Plex Mono", Menlo, monospace';
+
+/* ---------- layout ---------- */
+var GAPX = 44, GAPY = 8, PADX = 12;
+function measure(n, depth){
+  n.depth = depth;
+  var w = tw(n.t, F_LBL) + PADX*2;
+  if (n.n) w = Math.max(w, tw(n.n, F_NT) + PADX*2);
+  n.w = Math.ceil(Math.max(w, 96));
+  n.h = n.n ? 42 : 28;
+  n.kids = (n.open && n.c.length) ? n.c : [];
+  n.kids.forEach(function(k){ measure(k, depth+1); });
+  n.sh = n.kids.length ? Math.max(n.h, n.kids.reduce(function(a,k){ return a + k.sh; }, 0) + GAPY*(n.kids.length-1)) : n.h;
+}
+function place(n, x, y, colX){
+  n.x = colX[n.depth];
+  if (!n.kids.length){ n.y = y + (n.sh - n.h)/2; return; }
+  var cy = y;
+  n.kids.forEach(function(k){ place(k, 0, cy, colX); cy += k.sh + GAPY; });
+  var first = n.kids[0], last = n.kids[n.kids.length-1];
+  n.y = (first.y + first.h/2 + last.y + last.h/2)/2 - n.h/2;
+}
+function columns(root){
+  var maxw = [];
+  (function walk(n){ maxw[n.depth] = Math.max(maxw[n.depth]||0, n.w); n.kids.forEach(walk); })(root);
+  var colX = [], x = 6;
+  for (var d=0; d<maxw.length; d++){ colX[d] = x; x += maxw[d] + GAPX; }
+  return {colX:colX, width:x - GAPX + 6};
+}
+
+/* ---------- desenho ---------- */
+var svg = document.getElementById('map');
+var NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, parent){
+  var e = document.createElementNS(NS, tag);
+  for (var k in attrs){ if (attrs[k] !== null && attrs[k] !== undefined) e.setAttribute(k, attrs[k]); }
+  if (parent) parent.appendChild(e);
+  return e;
+}
+var current = null, mode = 'overview', selected = null, nodeIndex = [];
+function draw(){
+  var root = current;
+  measure(root, 0);
+  var cols = columns(root);
+  place(root, 0, 6, cols.colX);
+  var H = root.sh + 12, W = cols.width;
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  svg.setAttribute('viewBox', '0 0 '+W+' '+H);
+  svg.setAttribute('width', W); svg.setAttribute('height', H);
+  svg.style.minWidth = W+'px';
+  var links = el('g', {'class':'links'}, svg), nodes = el('g', {'class':'nodes'}, svg);
+  nodeIndex = [];
+  (function walk(n){
+    n.kids.forEach(function(k){
+      var x1 = n.x + n.w, y1 = n.y + n.h/2, x2 = k.x, y2 = k.y + k.h/2, mx = (x1 + x2)/2;
+      var cls = 'link' + (k.k==='nao'?' l-nao':k.k==='fim'?' l-fim':k.k==='exec'?' l-exec':'');
+      el('path', {d:'M'+x1+','+y1+' C'+mx+','+y1+' '+mx+','+y2+' '+x2+','+y2, 'class':cls}, links);
+      walk(k);
+    });
+    drawNode(n, nodes);
+  })(root);
+}
+function drawNode(n, parent){
+  var g = el('g', {'class':'node k-'+(n.k||'step')+(n.u?' unsure':'')+(n===selected?' selected':''), tabindex:'0', role:'button', transform:'translate('+n.x+','+n.y+')'}, parent);
+  var title = el('title', {}, g); title.textContent = n.t + (n.n?' — '+n.n:'');
+  el('rect', {'class':'box', width:n.w, height:n.h, rx:6}, g);
+  var lbl = el('text', {'class':'lbl', x:PADX, y: n.n ? 17 : 18}, g); lbl.textContent = n.t;
+  if (n.n){ var nt = el('text', {'class':'nt', x:PADX, y:33}, g); nt.textContent = n.n; }
+  if (n.c.length && !n.open){
+    var m = '+'+n.c.length, mw = tw(m, F_SRC) + 10;
+    el('rect', {'class':'morebg', x:n.w - mw/2, y:n.h/2 - 8, width:mw, height:16, rx:8}, g);
+    var mt = el('text', {'class':'more', x:n.w, y:n.h/2 + 3.5, 'text-anchor':'middle'}, g); mt.textContent = m;
+  }
+  g.addEventListener('click', function(ev){ ev.preventDefault(); onNode(n); });
+  g.addEventListener('keydown', function(ev){ if (ev.key==='Enter' || ev.key===' '){ ev.preventDefault(); onNode(n); } });
+  nodeIndex.push(n);
+}
+function onNode(n){
+  if (mode==='overview' && n.k==='esp' && n.id){ open(n.id); return; }
+  selected = n;
+  if (n.c.length){ n.open = !n.open; }
+  showDetail(n);
+  draw();
+}
+function showDetail(n){
+  var box = document.getElementById('detail');
+  var h = '<div class="detail-title">'+esc(n.t)+'</div>';
+  if (n.n) h += '<div class="detail-note">'+esc(n.n)+'</div>';
+  if (n.d) h += '<p class="detail-body">'+esc(n.d)+'</p>';
+  if (n.s){
+    h += '<div class="conf">Fonte: <a href="'+esc(n.s.u)+'" target="_blank" rel="noopener">'+esc(n.s.t)+'</a></div>';
+  }
+  if (n.c.length) h += '<div class="conf">'+n.c.length+' ramo'+(n.c.length>1?'s':'')+' — clique de novo para '+(n.open?'fechar':'abrir')+'.</div>';
+  box.innerHTML = h;
+}
+function esc(s){ return String(s===null||s===undefined?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function setOpen(n, v){ n.open = v; n.c.forEach(function(k){ setOpen(k, v); }); }
+
+/* ---------- modos ---------- */
+function open(id){
+  mode = 'species'; current = TREES[id](); selected = current;
+  /* fases abertas, passos com sub-ramos fechados: o leitor abre o que quer */
+  current.c.forEach(function(fase){ fase.c.forEach(function(passo){ if (passo.c.length) passo.open = false; }); });
+  document.getElementById('map-title').textContent = id + ' — ' + NAMES[id];
+  document.getElementById('map-sub').textContent = OVER[id];
+  Array.prototype.forEach.call(document.querySelectorAll('.chip'), function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-id')===id)); });
+  showDetail(current); draw();
+  try { localStorage.setItem('tramitacao-cldf:classe', id); } catch(e){}
+  try { history.replaceState(null, '', '#'+id.toLowerCase()); } catch(e){}
+}
+function overview(){
+  mode = 'overview'; current = treeOverview(); selected = null;
+  document.getElementById('map-title').textContent = 'Todas as classes';
+  document.getElementById('map-sub').textContent = Object.keys(TREES).length + ' classes, agrupadas por quem conclui o rito';
+  Array.prototype.forEach.call(document.querySelectorAll('.chip'), function(b){ b.setAttribute('aria-pressed', 'false'); });
+  var box = document.getElementById('detail');
+  box.innerHTML = '<div class="detail-title">Proposição na CLDF</div><div class="detail-note">Clique numa classe para abrir o rito; num nó, para ler a regra.</div><p class="detail-body">Toda proposição nasce como documento no PLe, é numerada e publicada e segue o rito que o Regimento reserva à sua classe. As que geram norma passam por comissões e Plenário; as que não geram norma resolvem-se numa comissão, na Mesa ou num despacho.</p>';
+  draw();
+  try { localStorage.removeItem('tramitacao-cldf:classe'); } catch(e){}
+  try { history.replaceState(null, '', '#geral'); } catch(e){}
+}
+
+/* ---------- fonte da contagem ---------- */
+function fonteVol(sg){
+  return (N[sg] !== null && N[sg] !== undefined && !ESCOPO[sg]) ? S.obs : S.ple;
+}
+
+/* ---------- início: nada é montado antes do feed ser lido ---------- */
+function iniciar(d){
+  D = d;
+  S = D.fontes;
+  SIGLAS.forEach(function(sg){
+    var j = janelaDe(sg);
+    JAN[sg] = j;
+    N[sg] = somaAnos(sg, j[0], j[1]);
+  });
+
+  var pub = D.janela.publicados;
+  document.getElementById('meta-volumes').innerHTML =
+    'Volumes: <b>proposições apresentadas por deputados titulares, ' + pub[0] + '–' + pub[pub.length-1]
+    + '</b>, segundo o Observatório CLDF';
+
+  var ol = document.getElementById('lista-fontes');
+  D.lista_de_fontes.forEach(function(partes){
+    var li = document.createElement('li'), h = '';
+    partes.forEach(function(p){
+      h += (typeof p === 'string') ? esc(p) : '<a href="'+esc(p.u)+'">'+esc(p.t)+'</a>';
+    });
+    li.innerHTML = h;
+    ol.appendChild(li);
+  });
+
+  var rail = document.getElementById('rail');
+  FAM.forEach(function(f){
+    var row = document.createElement('div'); row.className = 'fam';
+    var name = document.createElement('div'); name.className = 'fam-name'; name.innerHTML = esc(f.name)+'<small>'+esc(f.sub)+'</small>';
+    var chips = document.createElement('div'); chips.className = 'chips';
+    f.ids.forEach(function(id){
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.id = 'chip-'+id; b.setAttribute('data-id', id); b.setAttribute('aria-pressed', 'false');
+      b.innerHTML = '<span class="sg">'+esc(id)+'</span><span>'+esc(NAMES[id])+'</span>'+(N[id]!==null&&N[id]!==undefined?'<span class="ct">'+fmt(N[id])+'</span>':'');
+      b.addEventListener('click', function(){ open(id); });
+      chips.appendChild(b);
+    });
+    row.appendChild(name); row.appendChild(chips); rail.appendChild(row);
+  });
+
+  document.getElementById('btn-expand').addEventListener('click', function(){ if (current){ setOpen(current, true); draw(); } });
+  document.getElementById('btn-collapse').addEventListener('click', function(){ if (current){ current.c.forEach(function(k){ setOpen(k, false); k.open = false; }); current.open = true; draw(); } });
+  document.getElementById('btn-overview').addEventListener('click', overview);
+
+  var start = null;
+  try { var hsh = (location.hash||'').replace('#','').toUpperCase(); if (TREES[hsh]) start = hsh; } catch(e){}
+  if (!start){ try { var st = localStorage.getItem('tramitacao-cldf:classe'); if (st && TREES[st]) start = st; } catch(e){} }
+  if (start) open(start); else overview();
+}
+
+fetch('dados/tramitacao-fontes.json').then(function(r){
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}).then(iniciar).catch(function(e){
+  var box = document.getElementById('detail');
+  if (box) box.innerHTML = '<div class="detail-title">Não foi possível ler os dados</div>'
+    + '<div class="detail-note">' + esc(String((e && e.message) || e)) + '</div>'
+    + '<p class="detail-body">O mapa lê as fontes e as contagens de dados/tramitacao-fontes.json, ao lado desta página. Sem esse arquivo não há o que desenhar.</p>';
+});
+})();
+</script>
+
+</body>
+</html>

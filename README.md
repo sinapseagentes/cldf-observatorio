@@ -7,12 +7,16 @@ comissões.
 
 Site: https://sinapseagentes.github.io/cldf-observatorio/
 
-Versão 0.57.0.
+Versão 0.58.0.
 
 ## O que há nesta árvore
 
 - `index.html`, `observ.css`, `observ.js` — a página. Nenhuma dependência, nenhum pedido a
   outro servidor.
+- `tramitacao.html` — o mapa da tramitação legislativa na CLDF: as 14 classes de proposição
+  e o rito de cada uma, com o artigo do Regimento ao lado de cada etapa. Lê as normas que
+  cita e as suas contagens de `dados/tramitacao-fontes.json`; não escreve nenhum endereço
+  nem nenhum número no próprio arquivo.
 - `dados/*.json` — 64 arquivos. Cada campo é uma **contagem** ou uma
   **soma inteira em centavos**; nenhum arquivo guarda porcentagem, média, índice ou
   ranking. Toda porcentagem que a página mostra é calculada no navegador, ao lado do
