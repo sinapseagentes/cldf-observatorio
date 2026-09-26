@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Indicação Cidadã e Moção Popular</title>
+</head>
+<body>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;900&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+:root{
+  --bg:#f7f7f4;--paper:#ffffff;--ink:#1d2229;--ink2:#4a525c;--rule:#d9dbd6;
+  --acc:#1f4e79;--acc-soft:#e3ecf5;--warn:#8f3a2c;--warn-soft:#f6e6e2;--ok:#2f6b3a;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  --serif:'Source Serif 4',Georgia,'Times New Roman',serif;
+  --sans:'Archivo','Helvetica Neue',Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  color-scheme:dark;--bg:#14171b;--paper:#1c2026;--ink:#e6e7e3;--ink2:#a7adb5;--rule:#333941;
+  --acc:#8ab4e0;--acc-soft:#22303f;--warn:#e08a78;--warn-soft:#3a2521;--ok:#7fc48c;}}
+:root[data-theme="dark"]{
+  color-scheme:dark;--bg:#14171b;--paper:#1c2026;--ink:#e6e7e3;--ink2:#a7adb5;--rule:#333941;
+  --acc:#8ab4e0;--acc-soft:#22303f;--warn:#e08a78;--warn-soft:#3a2521;--ok:#7fc48c;}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--serif);font-size:17px;line-height:1.55;margin:0;padding-block:0 64px;padding-inline:16px}
+.wrap{max-width:72ch;margin:0 auto}
+header.top{padding-block:40px 24px;border-bottom:2px solid var(--ink)}
+.eyebrow{font-family:var(--sans);font-weight:700;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--acc)}
+h1{font-family:var(--sans);font-weight:900;font-size:clamp(30px,6vw,46px);line-height:1.02;letter-spacing:-.02em;margin:10px 0 14px;text-wrap:balance}
+.lede{font-size:19px;color:var(--ink2);margin:0}
+.motto{margin:28px 0 0;padding:18px 20px;background:var(--ink);color:var(--bg);font-family:var(--sans);font-weight:700;font-size:clamp(18px,3.4vw,24px);line-height:1.25;text-wrap:balance}
+.motto small{display:block;font-weight:500;font-size:13px;opacity:.75;margin-top:8px;letter-spacing:.06em;text-transform:uppercase}
+nav.toc{display:flex;flex-wrap:wrap;gap:8px 18px;padding-block:16px;border-bottom:1px solid var(--rule);font-family:var(--sans);font-size:13px;font-weight:500}
+nav.toc a{color:var(--acc);text-decoration:none;border-bottom:1px solid transparent}
+nav.toc a:hover,nav.toc a:focus-visible{border-bottom-color:var(--acc);outline:none}
+h2{font-family:var(--sans);font-weight:900;font-size:26px;letter-spacing:-.01em;margin:56px 0 8px;line-height:1.1;text-wrap:balance}
+h2 .num{display:block;font-size:12px;font-weight:700;letter-spacing:.12em;color:var(--acc);margin-bottom:6px}
+h3{font-family:var(--sans);font-weight:700;font-size:17px;margin:30px 0 8px}
+p{margin:0 0 14px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:22px 0 6px}
+.tile{background:var(--paper);border:1px solid var(--rule);padding:14px 16px}
+.tile b{display:block;font-family:var(--sans);font-weight:900;font-size:30px;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1}
+.tile span{display:block;font-family:var(--sans);font-size:12px;color:var(--ink2);margin-top:6px;letter-spacing:.02em}
+.src{font-family:var(--sans);font-size:12.5px;color:var(--ink2);margin:0 0 14px}
+table{border-collapse:collapse;width:100%;font-size:15px;margin:10px 0 18px}
+.tbl{overflow-x:auto}
+th,td{text-align:left;vertical-align:top;padding:9px 10px;border-bottom:1px solid var(--rule)}
+th{font-family:var(--sans);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);font-weight:700}
+.law{background:var(--paper);border:1px solid var(--rule);border-left:4px solid var(--acc);padding:22px 22px 8px;margin:18px 0}
+.law .ementa{font-style:italic;color:var(--ink2);margin-bottom:18px}
+.law .decreta{font-family:var(--sans);font-weight:700;font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 16px}
+.art{margin:0 0 16px}
+.art b.n{font-family:var(--sans);font-weight:700;font-size:14px}
+.art .par{margin:6px 0 0 1.5em}
+.novo{border-left:2px solid var(--rule);padding-left:16px;margin:8px 0 14px 0}
+.novo .cap{font-family:var(--sans);font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--acc);margin:0 0 10px}
+.novo .sec{font-family:var(--sans);font-weight:700;font-size:14px;margin:16px 0 8px}
+.rev{color:var(--ink2);font-style:italic}
+.obj{display:grid;grid-template-columns:1fr;gap:12px;margin:14px 0}
+.obj .item{background:var(--paper);border:1px solid var(--rule);padding:14px 16px}
+.obj .q{font-family:var(--sans);font-weight:700;font-size:14px;color:var(--warn);margin:0 0 6px}
+.obj .a{margin:0;font-size:15.5px}
+.tag{display:inline-block;font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border:1px solid currentColor;border-radius:2px;margin-left:6px;vertical-align:middle}
+.tag.ok{color:var(--ok)}.tag.warn{color:var(--warn)}
+ul.check{padding-left:1.2em}ul.check li{margin:0 0 8px}
+.mottos li{margin:0 0 10px}
+.mottos b{font-family:var(--sans)}
+code{font-family:var(--mono);font-size:.86em;background:var(--acc-soft);padding:1px 5px;border-radius:2px}
+footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--rule);font-family:var(--sans);font-size:12.5px;color:var(--ink2)}
+a{color:var(--acc)}
+@media (max-width:480px){.law{padding:16px 14px 4px}.art .par{margin-left:1em}}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">Compromisso de campanha · Câmara Legislativa do Distrito Federal · Projeto de Resolução + Projeto de Lei</div>
+  <h1>Indicação Cidadã e Moção Popular</h1>
+  <p class="lede">Fim da indicação e da moção como proposições de deputado. A indicação passa a ser do cidadão, consolidada pela Casa e respondida pelo Governo. A moção passa a ser popular, rara e fundamentada.</p>
+  <div class="motto">Deputado faz lei e fiscaliza. Pedido de tapa-buraco é do cidadão, e o Governo deve resposta a ele, não ao gabinete.<small>O compromisso</small></div>
+</header>
+
+<nav class="toc" aria-label="Seções">
+  <a href="#numeros">Os números</a><a href="#tese">A tese</a><a href="#veiculos">Por que dois projetos</a><a href="#pr">Projeto de Resolução</a><a href="#pl">Projeto de Lei</a><a href="#justificacao">Justificação</a><a href="#objecoes">Objeções previstas</a>
+</nav>
+
+<h2 id="numeros"><span class="num">1</span>O que o registro da própria Câmara diz</h2>
+<p>Atos de proposição dos 25 deputados titulares, 2023 a 2026, lidos da API pública da CLDF e republicados como dado aberto reproduzível.</p>
+<div class="tiles">
+  <div class="tile"><b>11.092</b><span>indicações</span></div>
+  <div class="tile"><b>2.292</b><span>moções</span></div>
+  <div class="tile"><b>2.171</b><span>projetos de lei</span></div>
+  <div class="tile"><b>2.287</b><span>moções que nunca saíram de “Apresentação”</span></div>
+</div>
+<p class="src">Total de atos no período: 23.849. Indicação + moção = 56% de tudo e 80% do que não é requerimento. Fonte: <a href="https://sinapseagentes.github.io/cldf-observatorio/">Observatório CLDF</a>, janela 2023–2026, 25 deputados titulares.</p>
+<p>Cinco indicações para cada projeto de lei. Das moções, 99,8% sem desfecho registrado. Nenhuma norma publicada diz quem expede a moção aprovada, a quem, em que prazo. A Câmara declara formalmente não deter consolidação sobre o que o Executivo fez com as indicações.</p>
+
+<h2 id="tese"><span class="num">2</span>A tese: representação é legal, não postal</h2>
+<p>A Lei Orgânica (art. 60) e o Regimento (art. 139) dão à Câmara três trabalhos: legislar, fiscalizar e deliberar sobre o que é privativamente seu. A indicação não é nenhum dos três. O Regimento a define pelo verbo <em>sugere</em> (art. 140): é o pedido de um cidadão com o timbre de um deputado, dirigido a um Poder que não tem dever de o ler. O deputado que protocola quinhentas por ano não representa. Opera uma sala de correio e a contabiliza como legislação.</p>
+<p>O deputado representa quando escreve a norma, quando a vota e quando fiscaliza a sua execução. Os instrumentos com dentes ficam intactos: requerimento de informação (RI art. 42; LODF art. 60, XXXIII), convocação de Secretário, CPI, TCDF. O que sai é o instrumento sem dente.</p>
+<p>A moção é o mesmo problema em forma de cerimônia. Louvor, pesar, repúdio e solidariedade são manifestações de grupos, não necessidades públicas, e a Casa as vota sem discussão e sem registrar o que fez delas. Devem ser eventuais, nascer de quem as sente e vir sempre com fundamento escrito.</p>
+
+<h2 id="veiculos"><span class="num">3</span>Por que dois projetos e não um</h2>
+<div class="tbl"><table>
+<tr><th>O que muda</th><th>Onde a regra vive</th><th>Veículo</th></tr>
+<tr><td>Indicação e moção como proposições (art. 136, VI e VII; arts. 140 e 141)</td><td>Regimento Interno</td><td><b>Projeto de Resolução</b>: maioria absoluta em 2 turnos (RI art. 248, § 2º); 1/3 de subscritores para protocolar (art. 152, II)</td></tr>
+<tr><td>Canal eletrônico, consolidação, moção popular, requerimento de ofício</td><td>Regimento + Ato da Mesa</td><td>O mesmo PR; a Mesa regulamenta o operacional</td></tr>
+<tr><td>Dever do Executivo de responder e publicar</td><td>Fora da Câmara</td><td><b>Projeto de Lei</b> de iniciativa parlamentar, escrito como dever de transparência (LODF art. 19; Lei nº 4.990/2012), sem comando de organização administrativa</td></tr>
+</table></div>
+<p>Um PL sozinho não alcança o art. 136: matéria <em>interna corporis</em> se altera por resolução. Um PR sozinho não obriga o Governador. Os dois juntos fecham o circuito.</p>
+
+<h2 id="pr"><span class="num">4</span>Projeto de Resolução nº ___, de 2027</h2>
+<div class="law">
+<p class="ementa">Altera o Regimento Interno da Câmara Legislativa do Distrito Federal (Resolução nº 353, de 10 de dezembro de 2024) para extinguir a indicação e a moção como proposições, instituir a indicação cidadã e a moção popular, de consolidação administrativa, e dá outras providências.</p>
+<p class="decreta">A Câmara Legislativa do Distrito Federal resolve:</p>
+
+<div class="art"><b class="n">Art. 1º</b> Ficam revogados os incisos VI e VII do art. 136 e os arts. 140 e 141 da Resolução nº 353, de 10 de dezembro de 2024.</div>
+
+<div class="art"><b class="n">Art. 2º</b> A Resolução nº 353, de 2024, passa a vigorar acrescida dos seguintes arts. 270-A a 270-E, após o art. 270:
+<div class="novo">
+<p class="cap">Da indicação cidadã e da moção popular</p>
+<p class="sec">Da indicação cidadã</p>
+<div class="art"><b class="n">Art. 270-A.</b> Indicação cidadã é a manifestação pela qual o cidadão com domicílio eleitoral no Distrito Federal sugere ao Poder Executivo, por intermédio da Câmara Legislativa:
+<div class="par">I – a adoção de providência, de ato administrativo ou de gestão;</div>
+<div class="par">II – o envio de projeto de lei sobre matéria de iniciativa privativa do Governador.</div>
+<div class="par">§ 1º A indicação cidadã é apresentada exclusivamente pela ferramenta eletrônica de que trata o Ato da Mesa Diretora nº 300, de 2025, ou a que lhe suceder, com identificação do cidadão, descrição da providência e indicação da Região Administrativa a que se refere.</div>
+<div class="par">§ 2º O Deputado Distrital não figura como autor, coautor, subscritor ou apoiador de indicação cidadã, e nenhum registro da ferramenta associa indicação cidadã a mandato parlamentar.</div>
+<div class="par">§ 3º A indicação cidadã não é proposição, não é distribuída a comissão, não recebe parecer e não é submetida a deliberação de órgão da Câmara Legislativa.</div>
+</div>
+<div class="art"><b class="n">Art. 270-B.</b> A Secretaria Legislativa consolida mensalmente as indicações cidadãs recebidas, agrupando-as por objeto, órgão destinatário e Região Administrativa, e registrando, para cada item consolidado, o número de manifestações que o compõem.
+<div class="par">§ 1º A Secretaria Legislativa indefere liminarmente, com registro público do motivo, a manifestação que:</div>
+<div class="par">I – não descreva providência determinável;</div>
+<div class="par">II – contenha ofensa, ameaça ou dado pessoal de terceiro;</div>
+<div class="par">III – repita, no mesmo objeto, manifestação do mesmo cidadão nos 12 meses anteriores.</div>
+<div class="par">§ 2º A consolidação é publicada no Sistema de Publicações Legislativas e em formato aberto e legível por máquina, sem o nome dos cidadãos, com a Região Administrativa e o número de manifestações por item.</div>
+<div class="par">§ 3º Do indeferimento cabe recurso à Mesa Diretora, em 5 dias, sem efeito suspensivo sobre a consolidação dos demais itens.</div>
+</div>
+<div class="art"><b class="n">Art. 270-C.</b> O Presidente da Câmara Legislativa encaminha ao Governador, até o décimo dia útil de cada mês, a consolidação do mês anterior, nos termos do art. 44, § 1º, V.
+<div class="par">§ 1º A resposta do Poder Executivo, ou a sua ausência, é publicada ao lado de cada item consolidado, no formato do art. 270-B, § 2º.</div>
+<div class="par">§ 2º Decorrido, sem resposta, o prazo fixado em lei para o Poder Executivo, a Mesa Diretora formula de ofício, em até 10 dias, requerimento de informação ao Secretário de Estado competente, na forma do art. 42, aplicando-se ao não atendimento o disposto no art. 60, XXXIII, da Lei Orgânica.</div>
+<div class="par">§ 3º Na abertura de cada sessão legislativa, a Mesa Diretora publica relatório do ano anterior com o número de itens consolidados, respondidos, não respondidos e convertidos em requerimento de informação, por órgão do Poder Executivo.</div>
+</div>
+<p class="sec">Da moção popular</p>
+<div class="art"><b class="n">Art. 270-D.</b> Moção popular é a manifestação de louvor, pesar, repúdio ou solidariedade que a Câmara Legislativa transmite, sem deliberar sobre o seu mérito, quando ideia cadastrada na ferramenta eletrônica de que trata o Ato da Mesa Diretora nº 300, de 2025, obtém, em até 30 dias, a subscrição de 1.000 cidadãos com domicílio eleitoral no Distrito Federal.
+<div class="par">§ 1º A ideia é cadastrada com justificativa obrigatória, que identifica o fato, a data, a fonte pública que o comprova e o destinatário; sem justificativa, a ideia não é publicada para subscrição.</div>
+<div class="par">§ 2º Só é admitida:</div>
+<div class="par">I – a moção de louvor, pesar ou solidariedade sobre fato ou acontecimento de alta significação para o Distrito Federal;</div>
+<div class="par">II – a moção de repúdio sobre ato ou omissão de agente público, de órgão ou entidade da administração pública, ou de pessoa jurídica no exercício de atividade de interesse público.</div>
+<div class="par">§ 3º Não se admite moção popular sobre pessoa natural fora da hipótese do § 2º, II, nem mais de uma moção popular sobre o mesmo fato na mesma sessão legislativa, nem moção de louvor a ocupante de mandato eletivo ou a candidato durante o período eleitoral.</div>
+<div class="par">§ 4º Atingido o número de subscrições, a Secretaria Legislativa verifica os requisitos deste artigo em 5 dias e a Mesa Diretora, sem discussão nem votação, atribui número de ordem à moção popular, publica-a com a sua justificativa e o número de subscritores por Região Administrativa, sem o nome dos subscritores, e a expede ao destinatário pelo Presidente, nos termos do art. 44, § 1º, V.</div>
+<div class="par">§ 5º O Deputado Distrital pode subscrever moção popular como cidadão; a subscrição não é registrada nem publicada como ato parlamentar.</div>
+</div>
+<div class="art"><b class="n">Art. 270-E.</b> Não se aplica à indicação cidadã nem à moção popular o disposto no art. 270, e a Mesa Diretora regulamenta por ato a ferramenta eletrônica, o leiaute dos dados abertos e o fluxo da Secretaria Legislativa.</div>
+</div>
+</div>
+
+<div class="art"><b class="n">Art. 3º</b> O inciso II do art. 44 da Resolução nº 353, de 2024, passa a vigorar acrescido da seguinte alínea:
+<div class="par">“___) encaminhar ao Governador a consolidação mensal das indicações cidadãs e expedir as moções populares, na forma dos arts. 270-A a 270-E;”</div></div>
+
+<div class="art"><b class="n">Art. 4º</b> Fica revogado o inciso XIV do art. 89 da Resolução nº 353, de 2024.</div>
+
+<div class="art"><b class="n">Art. 5º</b> As indicações e as moções apresentadas até a entrada em vigor desta Resolução e ainda não decididas são arquivadas de ofício pelo Presidente, com registro do motivo no processo legislativo eletrônico, e o seu objeto pode ser apresentado como indicação cidadã por qualquer cidadão.</div>
+
+<div class="art"><b class="n">Art. 6º</b> Esta Resolução entra em vigor no primeiro dia da sessão legislativa seguinte à sua publicação, e o art. 270-A, § 1º, produz efeitos a partir da regulamentação do art. 270-E, no prazo máximo de 90 dias da publicação.</div>
+
+<div class="art"><b class="n">Art. 7º</b> Revogam-se as disposições em contrário.</div>
+</div>
+
+<h2 id="pl"><span class="num">5</span>Projeto de Lei nº ___, de 2027</h2>
+<div class="law">
+<p class="ementa">Dispõe sobre o dever de resposta e de publicidade do Poder Executivo do Distrito Federal às indicações cidadãs consolidadas pela Câmara Legislativa.</p>
+<p class="decreta">A Câmara Legislativa do Distrito Federal decreta:</p>
+
+<div class="art"><b class="n">Art. 1º</b> Esta Lei estabelece o dever de resposta fundamentada e de publicidade do Poder Executivo do Distrito Federal em relação às indicações cidadãs consolidadas e encaminhadas pela Câmara Legislativa, com fundamento no art. 37, caput, da Constituição Federal, no art. 19 da Lei Orgânica do Distrito Federal e na Lei nº 4.990, de 12 de dezembro de 2012.</div>
+
+<div class="art"><b class="n">Art. 2º</b> Indicação cidadã consolidada é o item resultante do agrupamento, pela Câmara Legislativa, das manifestações de cidadãos que sugerem ao Poder Executivo providência, ato administrativo ou de gestão, ou envio de projeto de lei de iniciativa privativa do Governador, na forma do Regimento Interno da Câmara Legislativa.</div>
+
+<div class="art"><b class="n">Art. 3º</b> O Poder Executivo responde a cada item consolidado em 60 dias, contados do recebimento, informando:
+<div class="par">I – a providência adotada ou a adotar, o órgão responsável e o prazo estimado;</div>
+<div class="par">II – a não adoção da providência, com a justificativa técnica, orçamentária ou jurídica; ou</div>
+<div class="par">III – que a providência já foi executada, com a data e o órgão executor.</div>
+<div class="par">§ 1º O prazo é prorrogável uma única vez, por igual período, mediante justificativa publicada.</div>
+<div class="par">§ 2º Não satisfaz esta Lei a resposta que se limite a informar encaminhamento interno, sem o conteúdo dos incisos I a III.</div>
+<div class="par">§ 3º O item que sugira envio de projeto de lei de iniciativa privativa é respondido com a decisão de enviar ou não o projeto e, no primeiro caso, o prazo previsto.</div>
+</div>
+
+<div class="art"><b class="n">Art. 4º</b> O Poder Executivo publica as respostas no Portal da Transparência do Distrito Federal, em formato aberto e legível por máquina, no prazo do art. 3º, identificando cada item pelo número que a Câmara Legislativa lhe atribuiu.
+<div class="par">Parágrafo único. Responde pelo prazo o titular do órgão a que o item foi dirigido.</div></div>
+
+<div class="art"><b class="n">Art. 5º</b> A ausência de resposta no prazo do art. 3º equivale, para todos os efeitos, ao não atendimento de requerimento de informação de que trata o art. 60, XXXIII, da Lei Orgânica do Distrito Federal, e à negativa de acesso de que trata a Lei nº 4.990, de 2012.</div>
+
+<div class="art"><b class="n">Art. 6º</b> O Poder Executivo encaminha à Câmara Legislativa, até 31 de março de cada ano, relatório do ano anterior com o número de itens recebidos, respondidos por inciso do art. 3º, prorrogados e não respondidos, por órgão.</div>
+
+<div class="art"><b class="n">Art. 7º</b> Esta Lei entra em vigor 90 dias após a sua publicação.</div>
+</div>
+
+<h2 id="justificacao"><span class="num">6</span>Justificação (comum aos dois projetos)</h2>
+<h3>1. O que os números dizem</h3>
+<p>Entre 2023 e 2026, os 25 deputados titulares apresentaram 23.849 atos de proposição. Desses, 11.092 foram indicações e 2.292 foram moções: 56% de tudo o que foi protocolado e 80% de tudo o que não é requerimento. Projetos de lei no mesmo período: 2.171. Para cada projeto de lei, cinco indicações. Os números são públicos, reproduzíveis por qualquer cidadão a partir da API da própria Câmara, e publicados no Observatório CLDF com a consulta que os gerou ao lado de cada um.</p>
+<h3>2. Representação é legal, não postal</h3>
+<p>A Lei Orgânica, no art. 60, e o Regimento, no art. 139, dão a esta Casa três atribuições: legislar, fiscalizar e deliberar sobre o que lhe é privativo. A indicação não é nenhuma delas. O art. 140 a define pelo verbo <em>sugere</em>. Não vincula, não obriga resposta, não gera prazo, não gera dado. É o pedido de um cidadão com o timbre de um gabinete, dirigido a um Poder sem dever de o ler. Uma legislatura cujo produto é 80% sugestão deixou, pelos seus próprios números, de ser legislatura.</p>
+<p>Os instrumentos de representação com força ficam intactos e são os que importam: o projeto de lei, o voto, o requerimento de informação com resposta em 30 dias sob pena do art. 60, XXXIII, da Lei Orgânica, a convocação de Secretário, a CPI, o Tribunal de Contas. O que se retira é o instrumento sem força.</p>
+<h3>3. A sala de correio vai para onde o correio pertence</h3>
+<p>O pedido do cidadão ao Executivo passa a ir ao Executivo, consolidado pela Casa como registro público, com dever de resposta em 60 dias e publicação em dado aberto. Isso é mais representação para o cidadão, não menos: hoje o seu pedido produz a cópia de um formulário; com esta proposta produz uma resposta com nome, órgão e prazo, ou a justificativa de não haver providência. E o silêncio deixa de ser gratuito: converte-se em requerimento de informação, com a consequência que a Lei Orgânica já prevê.</p>
+<h3>4. A moção passa a ser rara, popular e fundamentada</h3>
+<p>Das 2.292 moções do período, 2.287 continuam na etapa “Apresentação” do sistema da Casa. Nenhuma norma publicada diz quem as expede, a quem ou em que prazo. A moção passa a nascer de mil cidadãos em trinta dias, sempre com justificativa escrita, restrita a fatos de alta significação ou a atos de agentes públicos, uma por fato por sessão legislativa, e a Câmara a transmite sem votar. O deputado que quiser louvar, lamentar ou repudiar faz o que qualquer cidadão faz: assina.</p>
+<h3>5. Quem perde, dito com todas as letras</h3>
+<p>Perdem os mandatos que hoje contabilizam a indicação como produção legislativa. Não há forma neutra de dizê-lo e esta justificação não a procura: a proposta retira o produto mais barato do gabinete e devolve ao cidadão o canal que faltava.</p>
+<h3>6. Custo</h3>
+<p>Zero despesa nova. A ferramenta eletrônica existe (Ato da Mesa Diretora nº 300/2025). A Secretaria Legislativa que hoje autua onze mil indicações passa a consolidá-las. O tempo de comissão e de Plenário liberado é tempo de projeto de lei, parecer e fiscalização.</p>
+<h3>7. Por que dois projetos</h3>
+<p>O Regimento só se altera por resolução (art. 248), e a resolução não obriga o Governador. A lei obriga o Governador, mas não alcança o art. 136. O projeto de lei foi redigido como dever de transparência, no molde da Lei nº 4.990/2012, sem comando sobre a organização do Executivo, para não invadir a iniciativa privativa do art. 71, § 1º, da Lei Orgânica.</p>
+
+<h2 id="objecoes"><span class="num">7</span>Objeções previstas e a resposta de cada uma</h2>
+<div class="obj">
+<div class="item"><p class="q">“Vocês estão silenciando a representação parlamentar.”</p><p class="a">Representação é legal, não postal. Ficam o projeto de lei, o voto, o requerimento de informação, a convocação, a CPI e o TCDF. Sai a sugestão sem dever de resposta. Quem chama isso de silêncio confessa que representava por correio.</p></div>
+<div class="item"><p class="q">“Matéria interna corporis; lei não altera o Regimento.”</p><p class="a">Correto, e por isso o Regimento é alterado pelo Projeto de Resolução (art. 248, § 2º) e a lei só cria dever do Executivo. Cada veículo dentro da sua competência.</p></div>
+<div class="item"><p class="q">“Iniciativa privativa do Governador (LODF art. 71, § 1º).”</p><p class="a">O PL não cria órgão, cargo, atribuição nem estrutura. Cria dever de resposta e de publicação, no molde da Lei nº 4.990/2012, que já vincula todos os Poderes. Responde o titular do órgão, que já existe.</p></div>
+<div class="item"><p class="q">“Cria crime de responsabilidade por lei ordinária.”</p><p class="a">Não cria. Equipara o silêncio ao não atendimento de requerimento de informação, que a Lei Orgânica já disciplina no art. 60, XXXIII, e remete. A lei não tipifica; remete ao que existe.</p></div>
+<div class="item"><p class="q">“Mil assinaturas compram um linchamento com timbre da Câmara.”</p><p class="a">Justificativa obrigatória com fato, data e fonte pública; repúdio só contra agente público, órgão ou pessoa jurídica em atividade de interesse público; nenhuma moção sobre pessoa natural fora disso; verificação prévia pela Secretaria Legislativa; uma moção por fato por sessão legislativa.</p></div>
+<div class="item"><p class="q">“Moção popular vira palanque em ano eleitoral.”</p><p class="a">Vedado o louvor a ocupante de mandato eletivo ou a candidato durante o período eleitoral (art. 270-D, § 3º), na mesma lógica que o art. 246 do Regimento já aplica aos títulos honoríficos.</p></div>
+<div class="item"><p class="q">“LGPD: expõe dados de cidadãos.”</p><p class="a">Publica-se o item, a Região Administrativa e o número de manifestações. Nunca o nome. A ferramenta já identifica o subscritor hoje; o que muda é o que se publica.</p></div>
+<div class="item"><p class="q">“Arquivar as pendentes é censura.”</p><p class="a">É o contrário: pela primeira vez o registro dirá o que aconteceu com elas, com o motivo gravado. E o objeto de qualquer uma pode voltar como indicação cidadã no dia seguinte.</p></div>
+<div class="item"><p class="q">“O deputado é cidadão e tem o direito de indicar.”</p><p class="a">Tem, e por isso pode subscrever moção popular como cidadão. Na indicação a vedação é ao mandato, não à pessoa: evita que a sala de correio volte com outro nome. O deputado que quer uma providência tem o art. 42 e tem o projeto de lei.</p></div>
+<div class="item"><p class="q">“Vai custar caro.”</p><p class="a">A ferramenta existe, a Secretaria existe, o Portal da Transparência existe. O que se cria é uma rotina mensal e um dado aberto. O que se libera é tempo de comissão e de Plenário.</p></div>
+</div>
+
+<footer>Normas: Res. nº 353/2024 compilada com as Res. nº 358/2025 e 362/2025 (SINJ-DF); LODF até a ELO 131/2024; AMD nº 300/2025; Lei nº 4.990/2012. Números: Observatório CLDF, 25 titulares, 2023–2026.</footer>
+</div>
+
+</body>
+</html>
