@@ -14,7 +14,7 @@
     ' o CSV desta visão exporta centavos inteiros. <b>Gabinete</b> conta gabinete-meses e' +
     ' soma o <b>líquido</b> da folha: a fonte publica a folha do gabinete sem o bruto' +
     ' (vazio em 229.662 das 229.662 linhas), então o bruto não existe para publicar.</p>';
-  var E = {aba: 'visao', ano: null, busca: '', partido: '', chips: {}, pagina: 0,
+  var E = {aba: 'visao', ano: null, busca: '', buscaTipo: null, partido: '', chips: {}, pagina: 0,
     comparar: [], sub: 'plenario', exportavel: null, detalhe: null, paginaModal: 0};
   var D = {meta: null, deputados: null, calendario: null, fontes: null, porAno: {}, atos: {}};
   var $ = function (id) { return document.getElementById(id); };
@@ -818,7 +818,7 @@
      ano, partido, busca e chips, para que um relato diga a que número ele se refere. */
   function formularioRelatar() {
     var estado = JSON.stringify({aba: E.aba, ano: E.ano, partido: E.partido, busca: E.busca,
-      chips: E.chips});
+      buscaTipo: E.buscaTipo, chips: E.chips});
     return '<h3 id="modal-titulo">Relatar problema ou sugestão</h3>' +
       '<p class="nota">Sua mensagem é enviada por um serviço de terceiros (Web3Forms) direto ' +
       'ao operador do projeto; esta página não guarda nem lê o que você escrever.</p>' +
@@ -913,109 +913,123 @@
         : 'Nenhum termo válido para busca.') + '</p>';
       return;
     }
-    var nota = comuns.length
-      ? '<p class="nota">Termos ignorados por aparecerem em mais de 90% dos documentos: ' +
-        esc(comuns.join(', ')) + '.</p>'
-      : '';
-    var prefix = tokens[tokens.length - 1];
-    var promises = tokens.map(function(t) {
-      var h = hashPrefix(t);
-      if (_buscaCache[h]) return Promise.resolve([t, _buscaCache[h]]);
-      return ler('dados/indice/idx-' + h + '.json').then(function(d) {
-        _buscaCache[h] = d; return [t, d];
-      }).catch(function() { return [t, {}]; });
-    });
-    Promise.all(promises).then(function(res) {
-      var lists = [];
-      for (var i = 0; i < res.length; i++) {
-        var t = res[i][0];
-        var shard = res[i][1];
-        var match = [];
-        if (i === res.length - 1) { // prefix match
-          for (var k in shard) {
-            if (k.indexOf(t) === 0) { match = match.concat(shard[k]); }
+      var nota = comuns.length
+        ? '<p class="nota">Termos ignorados por aparecerem em mais de 90% dos documentos: ' +
+          esc(comuns.join(', ')) + '.</p>'
+        : '';
+      if (E.buscaTipo && E.buscaTipo !== 'todos') {
+        nota += '<div style="margin-bottom: 15px;"><button type="button" class="chip" data-busca-limpar-tipo="1" aria-pressed="true">Restrito a proposições tipo: ' + esc(E.buscaTipo) + ' <small>×</small></button></div>';
+      }
+      var prefix = tokens[tokens.length - 1];
+      var promises = tokens.map(function(t) {
+        var h = hashPrefix(t);
+        if (_buscaCache[h]) return Promise.resolve([t, _buscaCache[h]]);
+        return ler('dados/indice/idx-' + h + '.json').then(function(d) {
+          _buscaCache[h] = d; return [t, d];
+        }).catch(function() { return [t, {}]; });
+      });
+      Promise.all(promises).then(function(res) {
+        var lists = [];
+        for (var i = 0; i < res.length; i++) {
+          var t = res[i][0];
+          var shard = res[i][1];
+          var match = [];
+          if (i === res.length - 1) { // prefix match
+            for (var k in shard) {
+              if (k.indexOf(t) === 0) { match = match.concat(shard[k]); }
+            }
+          } else {
+            match = shard[t] || [];
           }
-        } else {
-          match = shard[t] || [];
+          lists.push(match);
         }
-        lists.push(match);
-      }
-      var intersect = lists[0];
-      for (var i = 1; i < lists.length; i++) {
-        var set2 = new Set(lists[i]);
-        intersect = intersect.filter(function(x) { return set2.has(x); });
-      }
-      if (intersect.length === 0) {
-        painel.innerHTML = nota + '<p class="aviso">Nada encontrado.</p>';
-        return;
-      }
-      // fetch body shards
-      var bshards = {};
-      intersect.forEach(function(doc_id) {
-        var bid = Math.floor(doc_id / 40);
-        bshards[bid] = 1;
-      });
-      var bpromises = Object.keys(bshards).map(function(bid) {
-        if (_buscaCache['b'+bid]) return Promise.resolve([bid, _buscaCache['b'+bid]]);
-        return ler('dados/indice/body-' + bid + '.json').then(function(d) {
-          _buscaCache['b'+bid] = d; return [bid, d];
-        });
-      });
-      Promise.all(bpromises).then(function(bres) {
-        var bdata = {};
-        bres.forEach(function(r) { bdata[r[0]] = r[1]; });
-        
-        // Populate D.proposicoes or E.lista temporarily so detalheProposicao works?
-        // E.lista needs the data array!
-        E.lista = [];
-        var html = '<h2 class="sub">Resultados da busca</h2>' + nota;
-        var kinds = {0: "Deputados", 1: "Proposições", 2: "Emendas", 3: "Sessões", 4: "Matérias", 5: "Comissões", 6: "Documentos"};
-        var grouped = {0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: []};
-        
+        var intersect = lists[0];
+        for (var i = 1; i < lists.length; i++) {
+          var set2 = new Set(lists[i]);
+          intersect = intersect.filter(function(x) { return set2.has(x); });
+        }
+        if (intersect.length === 0) {
+          painel.innerHTML = nota + '<p class="aviso">Nada encontrado.</p>';
+          return;
+        }
+        // fetch body shards
+        var bshards = {};
         intersect.forEach(function(doc_id) {
           var bid = Math.floor(doc_id / 40);
-          var b = bdata[bid];
-          if (b && b.d && b.d[doc_id]) {
-            var item = b.d[doc_id];
-            grouped[item.k].push({id: doc_id, k: item.k, v: item.v, p: b.p});
-          }
+          bshards[bid] = 1;
         });
-        
-        for (var k in kinds) {
-          if (grouped[k].length === 0) continue;
-          html += '<h3>' + kinds[k] + '</h3><ul class="lista">';
-          grouped[k].forEach(function(item) {
-            if (item.k === 1) { // proposicao
-              var prop_id = item.v;
-              var l = item.p[prop_id];
-              if (l) {
-                E.lista.push(l);
-                html += '<li><a href="javascript:;" onclick="detalheProposicao(' + prop_id + ')">' + esc(l[1]) + ' - ' + esc(l[3]) + '</a></li>';
-              }
-            } else if (item.k === 6) { // documento
-              var prop_id = item.v[0];
-              var text = item.v[1];
-              var l = item.p[prop_id];
-              if (l) {
-                E.lista.push(l);
-                // Simple snippet: find first token
-                var idx = text.toLowerCase().indexOf(tokens[0]);
-                var start = Math.max(0, idx - 150);
-                var snippet = text.substring(start, start + 300);
-                html += '<li><a href="javascript:;" onclick="detalheProposicao(' + prop_id + ')">' + esc(l[1]) + ' - ' + esc(snippet) + '...</a></li>';
-              }
-            } else if (item.k === 0) { // deputado
-                // skip for now or just link to tab
-                html += '<li><a href="#deputados">' + esc('Deputado ' + item.v) + '</a></li>';
-            } else {
-                html += '<li>' + esc('Item ' + item.v) + '</li>';
+        var bpromises = Object.keys(bshards).map(function(bid) {
+          if (_buscaCache['b'+bid]) return Promise.resolve([bid, _buscaCache['b'+bid]]);
+          return ler('dados/indice/body-' + bid + '.json').then(function(d) {
+            _buscaCache['b'+bid] = d; return [bid, d];
+          });
+        });
+        Promise.all(bpromises).then(function(bres) {
+          var bdata = {};
+          bres.forEach(function(r) { bdata[r[0]] = r[1]; });
+          
+          E.lista = [];
+          var html = '<h2 class="sub">Resultados da busca</h2>' + nota;
+          var kinds = {0: "Deputados", 1: "Proposições", 2: "Emendas", 3: "Sessões", 4: "Matérias", 5: "Comissões", 6: "Documentos"};
+          var grouped = {0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: []};
+          
+          intersect.forEach(function(doc_id) {
+            var bid = Math.floor(doc_id / 40);
+            var b = bdata[bid];
+            if (b && b.d && b.d[doc_id]) {
+              var item = b.d[doc_id];
+              grouped[item.k].push({id: doc_id, k: item.k, v: item.v, p: b.p});
             }
           });
-          html += '</ul>';
-        }
-        painel.innerHTML = html;
+          
+          for (var k in kinds) {
+            if (grouped[k].length === 0) continue;
+            var html_kind = '<h3>' + kinds[k] + '</h3><ul class="lista">';
+            var added = 0;
+            grouped[k].forEach(function(item) {
+              if (item.k === 1) { // proposicao
+                var prop_id = item.v[0];
+                var prop_sigla = item.v[1];
+                if (E.buscaTipo && E.buscaTipo !== 'todos' && prop_sigla !== E.buscaTipo) return;
+                var l = item.p[prop_id];
+                if (l) {
+                  E.lista.push(l);
+                  html_kind += '<li><a href="javascript:;" data-prop="' + prop_id + '">' + esc(l[1]) + ' - ' + esc(l[3]) + '</a></li>';
+                  added++;
+                }
+              } else if (item.k === 6) { // documento
+                var prop_id = item.v[0];
+                var text = item.v[1];
+                var l = item.p[prop_id];
+                if (E.buscaTipo && E.buscaTipo !== 'todos' && l && l[2] !== E.buscaTipo) return;
+                if (l) {
+                  E.lista.push(l);
+                  var idx = text.toLowerCase().indexOf(tokens[0]);
+                  var start = Math.max(0, idx - 150);
+                  var snippet = text.substring(start, start + 300);
+                  html_kind += '<li><a href="javascript:;" data-prop="' + prop_id + '">' + esc(l[1]) + ' - ' + esc(snippet) + '...</a></li>';
+                  added++;
+                }
+              } else if (item.k === 0) { // deputado
+                  if (E.buscaTipo && E.buscaTipo !== 'todos') return;
+                  html_kind += '<li><a href="#deputados">' + esc('Deputado ' + item.v) + '</a></li>';
+                  added++;
+              } else {
+                  if (E.buscaTipo && E.buscaTipo !== 'todos') return;
+                  html_kind += '<li>' + esc('Item ' + item.v) + '</li>';
+                  added++;
+              }
+            });
+            html_kind += '</ul>';
+            if (added > 0) html += html_kind;
+          }
+          if (E.lista.length === 0 && E.buscaTipo && E.buscaTipo !== 'todos') {
+             painel.innerHTML = nota + '<p class="aviso">Nada encontrado com este filtro de tipo.</p>';
+          } else {
+             painel.innerHTML = html;
+          }
+        });
       });
-    });
   }
 
   function desenhar() {
@@ -1044,8 +1058,8 @@
   document.addEventListener('click', function (ev) {
     var t = ev.target.closest('[data-aba],[data-grupo],[data-pag],[data-perfil],[data-prop],' +
       '[data-emenda],[data-sessao],[data-materia],[data-folha],[data-sub],[data-detalhe],' +
-      '[data-pagm],[data-ir],#abrir-comparar,#abrir-relatar,#limpar,#exportar-csv,#exportar-pdf,' +
-      '#modal-fechar');
+      '[data-pagm],[data-ir],[data-nuvem-busca],#abrir-comparar,#abrir-relatar,#limpar,#exportar-csv,#exportar-pdf,' +
+      '#modal-fechar,#abrir-nuvem');
     if (ev.target === $('modal')) { fecharModal(); return; }
     if (!t) { return; }
     if (t.id === 'modal-fechar') { fecharModal(); }
@@ -1053,8 +1067,24 @@
     else if (t.id === 'exportar-pdf') { window.print(); }
     else if (t.id === 'abrir-comparar') { comparar(); }
     else if (t.id === 'abrir-relatar') { abrirModal(formularioRelatar()); }
+    else if (t.id === 'abrir-nuvem') { 
+      var nSigla = (E.buscaTipo && E.buscaTipo !== 'todos') ? E.buscaTipo : 'todos';
+      var nAno = (E.ano && E.ano !== 'todos') ? E.ano : 'todos';
+      history.replaceState(null, '', '#nuvem/' + nAno + '/' + nSigla); 
+      desenharNuvem(nSigla, nAno); 
+    }
+    else if (t.hasAttribute('data-nuvem-busca')) {
+      fecharModal(); 
+      E.busca = t.getAttribute('data-nuvem-busca'); 
+      E.buscaTipo = t.getAttribute('data-nuvem-sigla');
+      $('busca').value = E.busca; 
+      reiniciar();
+    }
+    else if (t.hasAttribute('data-busca-limpar-tipo')) {
+      E.buscaTipo = null; reiniciar();
+    }
     else if (t.id === 'limpar') {
-      E.busca = ''; E.partido = ''; E.chips = {}; $('busca').value = ''; $('partido').value = ''; reiniciar();
+      E.buscaTipo = null; E.busca = ''; E.partido = ''; E.chips = {}; $('busca').value = ''; $('partido').value = ''; reiniciar();
     } else if (t.hasAttribute('data-aba')) { E.aba = t.getAttribute('data-aba'); E.chips = {}; reiniciar(); }
     else if (t.hasAttribute('data-sub')) { E.sub = t.getAttribute('data-sub'); E.chips = {}; reiniciar(); }
     else if (t.hasAttribute('data-grupo')) {
@@ -1109,6 +1139,55 @@
     clearTimeout(espera);
     espera = setTimeout(function () { E.busca = ev.target.value; reiniciar(); }, 180);
   });
+  
+  function desenharNuvem(sigla, ano) {
+    abrirModal('<h3 id="modal-titulo">Nuvem de palavras</h3><p class="aviso">Carregando nuvem...</p>');
+    ler('dados/nuvem/' + esc(sigla) + '-' + esc(ano) + '.json').then(function(dados) {
+      if (!dados.palavras || !dados.palavras.length) {
+        $('modal-corpo').innerHTML = '<h3 id="modal-titulo">Nuvem de palavras</h3><p class="aviso">Nenhuma palavra encontrada para este recorte.</p>';
+        return;
+      }
+      var maxCount = dados.palavras[0][1];
+      var minCount = dados.palavras[dados.palavras.length - 1][1];
+      var diff = maxCount - minCount || 1;
+      var h = '<h3 id="modal-titulo">Nuvem de palavras</h3>' + 
+              '<p class="nota">' + inteiro(dados.n_textos) + ' textos analisados no recorte ' + esc(sigla) + ' ' + esc(ano) + '.</p>' +
+              '<div style="display: flex; gap: 10px; margin-bottom: 15px;">' +
+              '<select id="nuvem-ano"><option value="todos"' + (ano === 'todos' ? ' selected' : '') + '>Todos os anos</option>' + 
+              D.meta.anos_disponiveis.map(function(a) { return '<option value="' + a + '"' + (String(a) === ano ? ' selected' : '') + '>' + a + '</option>'; }).join('') + '</select>' +
+              '<select id="nuvem-sigla"><option value="todos"' + (sigla === 'todos' ? ' selected' : '') + '>Todas as siglas</option>' +
+              ['PL', 'PDL', 'IND', 'REQ', 'MO', 'PR', 'PELO', 'PLC', 'REC', 'QO'].map(function(s) { return '<option value="' + s + '"' + (s === sigla ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select>' +
+              '</div>' +
+              '<div class="nuvem-palavras" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:center; padding: 20px; background: var(--nada); border-radius: 12px; margin-top: 10px;">';
+      
+      var tbody = '';
+      dados.palavras.forEach(function(item) {
+        var term = item[0], count = item[1];
+        var size = 12 + ((count - minCount) / diff) * 24;
+        h += '<a href="javascript:;" data-nuvem-busca="' + esc(term) + '" data-nuvem-sigla="' + esc(sigla) + '" style="font-size: ' + size + 'px; text-decoration: none; color: var(--marca); line-height: 1;">' + esc(term) + '</a>';
+        tbody += '<tr><td><a href="javascript:;" data-nuvem-busca="' + esc(term) + '" data-nuvem-sigla="' + esc(sigla) + '">' + esc(term) + '</a></td><td class="num">' + inteiro(count) + '</td></tr>';
+      });
+      h += '</div>';
+      
+      h += '<div style="margin-top: 20px;"><table class="tabela"><thead><tr><th>Palavra</th><th class="num">Documentos</th></tr></thead><tbody>' + tbody + '</tbody></table></div>';
+      
+      if (dados.sem_texto) {
+        h += '<p class="nota" style="margin-top: 15px;">' + inteiro(dados.sem_texto) + ' PDFs contam como "sem texto" (apenas imagem) neste recorte e não foram analisados.</p>';
+      }
+      $('modal-corpo').innerHTML = h;
+      
+      $('nuvem-ano').addEventListener('change', function(e) {
+        history.replaceState(null, '', '#nuvem/' + e.target.value + '/' + $('nuvem-sigla').value);
+        desenharNuvem($('nuvem-sigla').value, e.target.value);
+      });
+      $('nuvem-sigla').addEventListener('change', function(e) {
+        history.replaceState(null, '', '#nuvem/' + $('nuvem-ano').value + '/' + e.target.value);
+        desenharNuvem(e.target.value, $('nuvem-ano').value);
+      });
+    }).catch(function(err) {
+        $('modal-corpo').innerHTML = '<h3 id="modal-titulo">Nuvem de palavras</h3><p class="aviso">Erro ao carregar a nuvem: ' + esc(err.message) + '</p>';
+    });
+  }
 
   /* ---------- partida ---------- */
   Promise.all([ler('dados/meta.json'), ler('dados/deputados.json'), ler('dados/calendario.json'),
@@ -1119,6 +1198,12 @@
     $('partido').innerHTML += Object.keys(partidos).sort().map(function (p) {
       return '<option value="' + esc(p) + '">' + esc(p) + '</option>'; }).join('');
     var partes = location.hash.replace('#', '').split('/');
+    if (partes[0] === 'nuvem') {
+      var nAno = partes[1] || 'todos', nSigla = partes[2] || 'todos';
+      if (nAno !== 'todos' && D.meta.anos_disponiveis.indexOf(Number(nAno)) < 0) { nAno = 'todos'; }
+      setTimeout(function() { desenharNuvem(nSigla, nAno); }, 100);
+      partes = ['visao', nAno];
+    }
     Object.keys(NOMES_ABA).forEach(function (k) { if (NOMES_ABA[k] === partes[0]) { E.aba = k; } });
     var pedido = partes[1];
     if (pedido === 'todos' || D.meta.anos_disponiveis.indexOf(Number(pedido)) >= 0) { $('ano').value = pedido; }
