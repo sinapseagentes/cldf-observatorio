@@ -15,6 +15,7 @@
     ' soma o <b>líquido</b> da folha: a fonte publica a folha do gabinete sem o bruto' +
     ' (vazio em 229.662 das 229.662 linhas), então o bruto não existe para publicar.</p>';
   var E = {aba: 'visao', ano: null, busca: '', buscaTipo: null, partido: '', chips: {}, pagina: 0,
+    filtroNuvem: null,
     comparar: [], sub: 'plenario', exportavel: null, detalhe: null, paginaModal: 0};
   var D = {meta: null, deputados: null, calendario: null, fontes: null, porAno: {}, atos: {}};
   var $ = function (id) { return document.getElementById(id); };
@@ -523,13 +524,29 @@
   function rotuloAno() { return E.ano === 'todos' ? '2023–2026' : String(E.ano); }
 
   /* ---------- Proposições ---------- */
+  /* OS-163 — the cloud's own list of proposição ids for the clicked word. The cloud counts
+     DISTINCT proposições, so this filter shows exactly the number the reader just read. */
+  function passaNuvem(l) {
+    if (!E.filtroNuvem) { return true; }
+    if (!E.filtroNuvem.conjunto) {
+      var c = {};
+      E.filtroNuvem.ids.forEach(function (x) { c[x] = 1; });
+      E.filtroNuvem.conjunto = c;
+    }
+    return E.filtroNuvem.conjunto[l[0]] === 1;
+  }
   function proposicoes(feeds) {
     var todas = []; feeds.forEach(function (f) { todas = todas.concat(f.linhas); });
     var sigla = E.chips.sigla || '';
     var base = todas.filter(function (l) {
-      return passaPartido(l[6]);
+      return passaPartido(l[6]) && passaNuvem(l);
     });
     chips('sigla', contar(base, function (l) { return l[2]; }));
+    if (E.filtroNuvem) {
+      $('chips').innerHTML = '<button type="button" class="chip" data-nuvem-limpar="1"' +
+        ' aria-pressed="true">palavra: ' + esc(E.filtroNuvem.termo) +
+        ' <small>×</small></button>' + $('chips').innerHTML;
+    }
     var linhas = sigla ? base.filter(function (l) { return l[2] === sigla; }) : base;
     E.exportavel = {nome: 'proposicoes', colunas: ['proposicao_id', 'sigla_numero_ano', 'ementa',
       'etapa', 'data_leitura', 'autores_titulares', 'n_autores', 'regioes'],
@@ -1058,7 +1075,7 @@
   document.addEventListener('click', function (ev) {
     var t = ev.target.closest('[data-aba],[data-grupo],[data-pag],[data-perfil],[data-prop],' +
       '[data-emenda],[data-sessao],[data-materia],[data-folha],[data-sub],[data-detalhe],' +
-      '[data-pagm],[data-ir],[data-nuvem-busca],#abrir-comparar,#abrir-relatar,#limpar,#exportar-csv,#exportar-pdf,' +
+      '[data-pagm],[data-ir],[data-nuvem-termo],[data-nuvem-limpar],#abrir-comparar,#abrir-relatar,#limpar,#exportar-csv,#exportar-pdf,' +
       '#modal-fechar,#abrir-nuvem');
     if (ev.target === $('modal')) { fecharModal(); return; }
     if (!t) { return; }
@@ -1073,19 +1090,20 @@
       history.replaceState(null, '', '#nuvem/' + nAno + '/' + nSigla); 
       desenharNuvem(nSigla, nAno); 
     }
-    else if (t.hasAttribute('data-nuvem-busca')) {
-      fecharModal(); 
-      E.busca = t.getAttribute('data-nuvem-busca'); 
-      E.buscaTipo = t.getAttribute('data-nuvem-sigla');
-      $('busca').value = E.busca; 
-      reiniciar();
+    else if (t.hasAttribute('data-nuvem-termo')) {
+      filtrarPorPalavra(t.getAttribute('data-nuvem-termo'), t.getAttribute('data-nuvem-sigla'),
+        t.getAttribute('data-nuvem-ano'), t.getAttribute('data-nuvem-shard'),
+        Number(t.getAttribute('data-nuvem-n')));
     }
+    else if (t.hasAttribute('data-nuvem-limpar')) { E.filtroNuvem = null; reiniciar(); }
     else if (t.hasAttribute('data-busca-limpar-tipo')) {
       E.buscaTipo = null; reiniciar();
     }
     else if (t.id === 'limpar') {
-      E.buscaTipo = null; E.busca = ''; E.partido = ''; E.chips = {}; $('busca').value = ''; $('partido').value = ''; reiniciar();
-    } else if (t.hasAttribute('data-aba')) { E.aba = t.getAttribute('data-aba'); E.chips = {}; reiniciar(); }
+      E.buscaTipo = null; E.busca = ''; E.partido = ''; E.chips = {}; E.filtroNuvem = null;
+      $('busca').value = ''; $('partido').value = ''; reiniciar();
+    } else if (t.hasAttribute('data-aba')) { E.aba = t.getAttribute('data-aba'); E.chips = {};
+      E.filtroNuvem = null; reiniciar(); }
     else if (t.hasAttribute('data-sub')) { E.sub = t.getAttribute('data-sub'); E.chips = {}; reiniciar(); }
     else if (t.hasAttribute('data-grupo')) {
       var g = t.getAttribute('data-grupo'), v = t.getAttribute('data-valor');
@@ -1151,7 +1169,7 @@
       var minCount = dados.palavras[dados.palavras.length - 1][1];
       var diff = maxCount - minCount || 1;
       var h = '<h3 id="modal-titulo">Nuvem de palavras</h3>' + 
-              '<p class="nota">' + inteiro(dados.n_textos) + ' textos analisados no recorte ' + esc(sigla) + ' ' + esc(ano) + '.</p>' +
+              '<p class="nota">' + inteiro(dados.n_proposicoes) + ' proposições no recorte ' + esc(sigla) + ' ' + esc(ano) + ', lidas em ' + inteiro(dados.n_textos) + ' textos. O número ao lado de cada palavra é o número de <b>proposições</b> que a trazem — clicar abre exatamente essas linhas.</p>' +
               '<div style="display: flex; gap: 10px; margin-bottom: 15px;">' +
               '<select id="nuvem-ano"><option value="todos"' + (ano === 'todos' ? ' selected' : '') + '>Todos os anos</option>' + 
               D.meta.anos_disponiveis.map(function(a) { return '<option value="' + a + '"' + (String(a) === ano ? ' selected' : '') + '>' + a + '</option>'; }).join('') + '</select>' +
@@ -1164,12 +1182,21 @@
       dados.palavras.forEach(function(item) {
         var term = item[0], count = item[1];
         var size = 12 + ((count - minCount) / diff) * 24;
-        h += '<a href="javascript:;" data-nuvem-busca="' + esc(term) + '" data-nuvem-sigla="' + esc(sigla) + '" style="font-size: ' + size + 'px; text-decoration: none; color: var(--marca); line-height: 1;">' + esc(term) + '</a>';
-        tbody += '<tr><td><a href="javascript:;" data-nuvem-busca="' + esc(term) + '" data-nuvem-sigla="' + esc(sigla) + '">' + esc(term) + '</a></td><td class="num">' + inteiro(count) + '</td></tr>';
+        var atrs = 'data-nuvem-termo="' + esc(term) + '" data-nuvem-n="' + count +
+          '" data-nuvem-sigla="' + esc(sigla) + '" data-nuvem-ano="' + esc(ano) +
+          '" data-nuvem-shard="' + item[2] + '"';
+        h += '<a href="javascript:;" ' + atrs + ' style="font-size: ' + size + 'px; text-decoration: none; color: var(--marca); line-height: 1;">' + esc(term) + '</a>';
+        tbody += '<tr><td><a href="javascript:;" ' + atrs + '>' + esc(term) + '</a></td><td class="num">' + inteiro(count) + '</td></tr>';
       });
       h += '</div>';
       
-      h += '<div style="margin-top: 20px;"><table class="tabela"><thead><tr><th>Palavra</th><th class="num">Documentos</th></tr></thead><tbody>' + tbody + '</tbody></table></div>';
+      h += '<div style="margin-top: 20px;"><table class="tabela"><thead><tr><th>Palavra</th><th class="num">Proposições</th></tr></thead><tbody>' + tbody + '</tbody></table></div>';
+
+      if (dados.excluidas && dados.excluidas.length) {
+        h += '<p class="nota" style="margin-top: 15px;">' + inteiro(dados.excluidas.length) +
+          ' palavras de tramitação e de formulário foram excluídas deste recorte — o quadro da' +
+          ' carta, não o seu assunto: ' + esc(dados.excluidas.join(', ')) + '.</p>';
+      }
       
       if (dados.sem_texto) {
         h += '<p class="nota" style="margin-top: 15px;">' + inteiro(dados.sem_texto) + ' PDFs contam como "sem texto" (apenas imagem) neste recorte e não foram analisados.</p>';
@@ -1187,6 +1214,23 @@
     }).catch(function(err) {
         $('modal-corpo').innerHTML = '<h3 id="modal-titulo">Nuvem de palavras</h3><p class="aviso">Erro ao carregar a nuvem: ' + esc(err.message) + '</p>';
     });
+  }
+
+  /* OS-163 — one ids file per click, never a re-scan of the index. The cloud entry carries
+     its own estilhaço, so the page reads exactly one file however large the corpus is. */
+  function filtrarPorPalavra(termo, sigla, ano, estilhaco, n) {
+    ler('dados/nuvem/ids/' + esc(sigla) + '-' + esc(ano) + '-' + esc(estilhaco) + '.json')
+      .then(function (mapa) {
+        fecharModal();
+        E.filtroNuvem = {termo: termo, sigla: sigla, ano: ano, n: n, ids: mapa[termo] || []};
+        E.busca = ''; E.buscaTipo = null; $('busca').value = '';
+        E.aba = 'proposicoes'; E.chips = {};
+        if (ano !== 'todos') { E.ano = ano; $('ano').value = ano; }
+        reiniciar();
+      }).catch(function (err) {
+        $('modal-corpo').innerHTML = '<h3 id="modal-titulo">Nuvem de palavras</h3>' +
+          '<p class="aviso">Não foi possível filtrar por esta palavra: ' + esc(err.message) + '</p>';
+      });
   }
 
   /* ---------- partida ---------- */
