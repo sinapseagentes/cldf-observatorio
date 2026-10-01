@@ -7,7 +7,7 @@ comissões.
 
 Site: https://sinapseagentes.github.io/cldf-observatorio/
 
-Versão 0.60.0.
+Versão 0.65.0.
 
 ## O que há nesta árvore
 
@@ -17,7 +17,7 @@ Versão 0.60.0.
   e o rito de cada uma, com o artigo do Regimento ao lado de cada etapa. Lê as normas que
   cita e as suas contagens de `dados/tramitacao-fontes.json`; não escreve nenhum endereço
   nem nenhum número no próprio arquivo.
-- `dados/*.json` — 114 arquivos. Cada campo é uma **contagem** ou uma
+- `dados/*.json` — 124 arquivos. Cada campo é uma **contagem** ou uma
   **soma inteira em centavos**; nenhum arquivo guarda porcentagem, média, índice ou
   ranking. Toda porcentagem que a página mostra é calculada no navegador, ao lado do
   numerador e do denominador.

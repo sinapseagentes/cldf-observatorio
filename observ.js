@@ -544,7 +544,8 @@
     chips('sigla', contar(base, function (l) { return l[2]; }));
     if (E.filtroNuvem) {
       $('chips').innerHTML = '<button type="button" class="chip" data-nuvem-limpar="1"' +
-        ' aria-pressed="true">palavra: ' + esc(E.filtroNuvem.termo) +
+        ' aria-pressed="true">' + (E.filtroNuvem.base === 'lugares' ? 'lugar: ' : 'palavra: ') +
+        esc(E.filtroNuvem.termo) +
         ' <small>×</small></button>' + $('chips').innerHTML;
     }
     var linhas = sigla ? base.filter(function (l) { return l[2] === sigla; }) : base;
@@ -1093,7 +1094,7 @@
     else if (t.hasAttribute('data-nuvem-termo')) {
       filtrarPorPalavra(t.getAttribute('data-nuvem-termo'), t.getAttribute('data-nuvem-sigla'),
         t.getAttribute('data-nuvem-ano'), t.getAttribute('data-nuvem-shard'),
-        Number(t.getAttribute('data-nuvem-n')));
+        Number(t.getAttribute('data-nuvem-n')), t.getAttribute('data-nuvem-base') || 'nuvem');
     }
     else if (t.hasAttribute('data-nuvem-limpar')) { E.filtroNuvem = null; reiniciar(); }
     else if (t.hasAttribute('data-busca-limpar-tipo')) {
@@ -1165,11 +1166,12 @@
         $('modal-corpo').innerHTML = '<h3 id="modal-titulo">Nuvem de palavras</h3><p class="aviso">Nenhuma palavra encontrada para este recorte.</p>';
         return;
       }
-      var maxCount = dados.palavras[0][1];
-      var minCount = dados.palavras[dados.palavras.length - 1][1];
-      var diff = maxCount - minCount || 1;
+      /* OS-167 — the list is in order of how CHARACTERISTIC a term is, not how frequent, so
+         the size follows the position; the count stays beside it as the click's promise. */
+      var total = dados.palavras.length;
       var h = '<h3 id="modal-titulo">Nuvem de palavras</h3>' + 
               '<p class="nota">' + inteiro(dados.n_proposicoes) + ' proposições no recorte ' + esc(sigla) + ' ' + esc(ano) + ', lidas em ' + inteiro(dados.n_textos) + ' textos. O número ao lado de cada palavra é o número de <b>proposições</b> que a trazem — clicar abre exatamente essas linhas.</p>' +
+              '<p class="nota">A nuvem mostra os termos <b>mais característicos</b> deste recorte — os que ele usa muito mais que as outras siglas do mesmo período —, não os mais frequentes. Textos idênticos (modelos copiados) contam uma vez só para essa ordem.</p>' +
               '<div style="display: flex; gap: 10px; margin-bottom: 15px;">' +
               '<select id="nuvem-ano"><option value="todos"' + (ano === 'todos' ? ' selected' : '') + '>Todos os anos</option>' + 
               D.meta.anos_disponiveis.map(function(a) { return '<option value="' + a + '"' + (String(a) === ano ? ' selected' : '') + '>' + a + '</option>'; }).join('') + '</select>' +
@@ -1179,9 +1181,9 @@
               '<div class="nuvem-palavras" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:center; padding: 20px; background: var(--nada); border-radius: 12px; margin-top: 10px;">';
       
       var tbody = '';
-      dados.palavras.forEach(function(item) {
+      dados.palavras.forEach(function(item, i) {
         var term = item[0], count = item[1];
-        var size = 12 + ((count - minCount) / diff) * 24;
+        var size = 12 + ((total - 1 - i) / (total - 1 || 1)) * 24;
         var atrs = 'data-nuvem-termo="' + esc(term) + '" data-nuvem-n="' + count +
           '" data-nuvem-sigla="' + esc(sigla) + '" data-nuvem-ano="' + esc(ano) +
           '" data-nuvem-shard="' + item[2] + '"';
@@ -1194,14 +1196,18 @@
 
       if (dados.excluidas && dados.excluidas.length) {
         h += '<p class="nota" style="margin-top: 15px;">' + inteiro(dados.excluidas.length) +
-          ' palavras de tramitação e de formulário foram excluídas deste recorte — o quadro da' +
-          ' carta, não o seu assunto: ' + esc(dados.excluidas.join(', ')) + '.</p>';
+          ' palavras de tramitação, de formulário e de justificativa foram excluídas deste recorte —' +
+          ' o quadro e o argumento da carta, não o seu assunto: ' + esc(dados.excluidas.join(', ')) + '.</p>';
       }
       
       if (dados.sem_texto) {
-        h += '<p class="nota" style="margin-top: 15px;">' + inteiro(dados.sem_texto) + ' PDFs contam como "sem texto" (apenas imagem) neste recorte e não foram analisados.</p>';
+        h += '<p class="nota" style="margin-top: 15px;">' + inteiro(dados.sem_texto) + ' documentos contam como "sem texto" neste recorte — PDFs só de imagem, ou cujo texto extraído é em boa parte caracteres ilegíveis — e não foram analisados.</p>';
+      }
+      if (sigla === 'IND') {
+        h += '<div id="nuvem-lugares" style="margin-top: 20px;"><p class="aviso">Carregando lugares...</p></div>';
       }
       $('modal-corpo').innerHTML = h;
+      if (sigla === 'IND') { desenharLugares(ano); }
       
       $('nuvem-ano').addEventListener('change', function(e) {
         history.replaceState(null, '', '#nuvem/' + e.target.value + '/' + $('nuvem-sigla').value);
@@ -1216,13 +1222,55 @@
     });
   }
 
+  /* OS-167 — where the indicações ask for things: the 35 Regiões Administrativas, counted by
+     proposição and ordered by that count. Same [termo, n, estilhaço] shape as the cloud, so a
+     click filters through the same path. */
+  function desenharLugares(ano) {
+    ler('dados/lugares/IND-' + esc(ano) + '.json').then(function (dados) {
+      var alvo = $('nuvem-lugares');
+      if (!alvo) { return; }
+      if (!dados.palavras || !dados.palavras.length) {
+        alvo.innerHTML = '<p class="aviso">Nenhuma Região Administrativa nomeada neste recorte.</p>';
+        return;
+      }
+      var max = dados.palavras[0][1], min = dados.palavras[dados.palavras.length - 1][1];
+      var diff = max - min || 1;
+      var h = '<h4>Onde: Regiões Administrativas</h4><p class="nota">Indicações que nomeiam cada' +
+        ' uma das 35 Regiões Administrativas, contadas por proposição. ' +
+        inteiro(dados.n_listas) + ' indicações que nomeiam mais de ' + inteiro(dados.limite) +
+        ' regiões (listas) não contam em nenhuma.</p><div class="nuvem-palavras" style="display:flex;' +
+        ' flex-wrap:wrap; gap:10px; align-items:center; justify-content:center; padding: 20px;' +
+        ' background: var(--nada); border-radius: 12px;">';
+      var tbody = '';
+      dados.palavras.forEach(function (item) {
+        var size = 12 + ((item[1] - min) / diff) * 24;
+        var atrs = 'data-nuvem-termo="' + esc(item[0]) + '" data-nuvem-n="' + item[1] +
+          '" data-nuvem-sigla="IND" data-nuvem-ano="' + esc(ano) + '" data-nuvem-shard="' +
+          item[2] + '" data-nuvem-base="lugares"';
+        h += '<a href="javascript:;" ' + atrs + ' style="font-size: ' + size +
+          'px; text-decoration: none; color: var(--marca); line-height: 1;">' + esc(item[0]) + '</a>';
+        tbody += '<tr><td><a href="javascript:;" ' + atrs + '>' + esc(item[0]) +
+          '</a></td><td class="num">' + inteiro(item[1]) + '</td></tr>';
+      });
+      h += '</div><div style="margin-top: 20px;"><table class="tabela"><thead><tr><th>Região' +
+        '</th><th class="num">Indicações</th></tr></thead><tbody>' + tbody + '</tbody></table></div>';
+      alvo.innerHTML = h;
+    }).catch(function (err) {
+      var alvo = $('nuvem-lugares');
+      if (alvo) { alvo.innerHTML = '<p class="aviso">Erro ao carregar os lugares: ' + esc(err.message) + '</p>'; }
+    });
+  }
+
   /* OS-163 — one ids file per click, never a re-scan of the index. The cloud entry carries
-     its own estilhaço, so the page reads exactly one file however large the corpus is. */
-  function filtrarPorPalavra(termo, sigla, ano, estilhaco, n) {
-    ler('dados/nuvem/ids/' + esc(sigla) + '-' + esc(ano) + '-' + esc(estilhaco) + '.json')
+     its own estilhaço, so the page reads exactly one file however large the corpus is.
+     OS-167 — the places cloud clicks through here too, from its own ids directory. */
+  function filtrarPorPalavra(termo, sigla, ano, estilhaco, n, base) {
+    base = base === 'lugares' ? 'lugares' : 'nuvem';
+    ler('dados/' + base + '/ids/' + esc(sigla) + '-' + esc(ano) + '-' + esc(estilhaco) + '.json')
       .then(function (mapa) {
         fecharModal();
-        E.filtroNuvem = {termo: termo, sigla: sigla, ano: ano, n: n, ids: mapa[termo] || []};
+        E.filtroNuvem = {termo: termo, sigla: sigla, ano: ano, n: n, base: base,
+          ids: mapa[termo] || []};
         E.busca = ''; E.buscaTipo = null; $('busca').value = '';
         E.aba = 'proposicoes'; E.chips = {};
         if (ano !== 'todos') { E.ano = ano; $('ano').value = ano; }
