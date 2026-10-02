@@ -7,7 +7,7 @@ comissões.
 
 Site: https://sinapseagentes.github.io/cldf-observatorio/
 
-Versão 0.65.0.
+Versão 0.66.0.
 
 ## O que há nesta árvore
 

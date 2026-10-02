@@ -10,10 +10,29 @@
      leitor não tem como adivinhar da tabela: que os reais na tela estão truncados e o CSV
      traz centavos, e que o gabinete é o LÍQUIDO porque o bruto não existe na fonte —
      `folha_pagamento.bruto` está vazio em 229.662 das 229.662 linhas GABINETE (OS-139). */
-  var NOTA_DO_DINHEIRO = '<p class="nota">Dinheiro em reais inteiros, truncado para exibição;' +
-    ' o CSV desta visão exporta centavos inteiros. <b>Gabinete</b> conta gabinete-meses e' +
+  var NOTA_DO_DINHEIRO = '<p class="nota">Dinheiro em reais inteiros, sem os centavos;' +
+    ' a planilha desta visão traz os centavos. <b>Gabinete</b> conta gabinete-meses e' +
     ' soma o <b>líquido</b> da folha: a fonte publica a folha do gabinete sem o bruto' +
     ' (vazio em 229.662 das 229.662 linhas), então o bruto não existe para publicar.</p>';
+  /* OS-168 — notas de rodapé. O operador, 2026-10-02: "Methodological notes should appear in
+     the footnotes rather than in the body of the text." O corpo diz o quê; a nota diz como.
+     Uma marca é <sup><a href="#nota-X-N" id="ref-X-N">N</a></sup>, a lista é <ol class="notas">,
+     e cada nota volta ao texto pelo ↩. O prefixo X separa as listas que coexistem na página
+     (a aba pintada, o popup, o rodapé), para que nenhum id se repita. */
+  function Notas(prefixo) { this.p = prefixo; this.itens = []; }
+  Notas.prototype.marca = function (texto) {
+    this.itens.push(texto);
+    var id = this.p + '-' + this.itens.length;
+    return '<sup><a href="#nota-' + id + '" id="ref-' + id + '">' + this.itens.length + '</a></sup>';
+  };
+  Notas.prototype.html = function () {
+    if (!this.itens.length) { return ''; }
+    var p = this.p;
+    return '<h3 class="notas-titulo">Notas</h3><ol class="notas">' + this.itens.map(function (t, i) {
+      var id = p + '-' + (i + 1);
+      return '<li id="nota-' + id + '">' + t + ' <a href="#ref-' + id +
+        '" aria-label="voltar ao texto">↩</a></li>'; }).join('') + '</ol>';
+  };
   var E = {aba: 'visao', ano: null, busca: '', buscaTipo: null, partido: '', chips: {}, pagina: 0,
     filtroNuvem: null,
     comparar: [], sub: 'plenario', exportavel: null, detalhe: null, paginaModal: 0};
@@ -296,7 +315,7 @@
       '. Cada linha liga ao artefato público mais fino que a fonte expõe.' +
       (s.dep === null ? '' : '<button type="button" class="detalhe" data-perfil="' +
         Number(s.dep) + '">← voltar ao perfil</button>') + '</p>';
-    if (!total) { return h + '<p class="aviso">Nenhum ato neste recorte.</p>'; }
+    if (!total) { return h + '<p class="aviso">Nenhum ato nesta seleção.</p>'; }
     var geral = {}, ordemGeral = [];
     blocos.forEach(function (b) {
       b.colunas.forEach(function (c, i) {
@@ -355,7 +374,7 @@
       return [d, n];
     });
     var h = '<div class="kpis">' +
-      kpi('Atos dos titulares', inteiro(soma(tit)), razao(soma(tit), soma(led)) + ' dos atos do ledger no período',
+      kpi('Atos dos titulares', inteiro(soma(tit)), razao(soma(tit), soma(led)) + ' de todos os atos registrados no período',
         botaoDetalhe(tiposDoLedger(), 'Atos dos titulares')) +
       kpi('Proposições', inteiro(metaSoma('proposicoes')), 'com ao menos um titular entre os autores',
         botaoIr('proposicoes', 'Ver as proposições')) +
@@ -374,7 +393,7 @@
         botaoIr('votacoes', 'Ver as folhas', 'comissao')) +
       '</div>';
     h += '<h2>Atos por tipo</h2><div class="rolagem"><table class="tipos"><thead><tr><th>Tipo</th>' +
-      '<th>Ato</th><th class="num">Titulares</th><th class="num">Ledger</th><th>Detalhe</th>' +
+      '<th>Ato</th><th class="num">Titulares</th><th class="num">Todos os autores</th><th>Detalhe</th>' +
       '</tr></thead><tbody>';
     D.meta.tipos_ato.forEach(function (t) {
       var k = String(t.tipo_ato), fora = t.atos === 0;
@@ -466,7 +485,7 @@
       kpi('Apresentou', inteiro(n.atos['1'] || 0), Object.keys(n.apresentou_por_sigla).sort().map(function (s) {
         return esc(s) + ' ' + inteiro(n.apresentou_por_sigla[s]); }).join(' · '),
         botaoDetalhe([1], 'Proposições apresentadas — ' + d.nome, d.i)) +
-      kpi('Assinou documentos', inteiro(n.atos['2'] || 0), 'ato 2 do ledger',
+      kpi('Assinou documentos', inteiro(n.atos['2'] || 0), 'documentos com a sua assinatura',
         botaoDetalhe([2], 'Documentos assinados — ' + d.nome, d.i)) +
       kpi('Relatou (parecer)', inteiro(n.atos['3'] || 0), 'onde o relator é atribuível',
         botaoDetalhe([3], 'Pareceres relatados — ' + d.nome, d.i)) +
@@ -555,8 +574,9 @@
         return [l[0], l[1], l[3], l[4], l[5], nomesDe(l[6]), l[7], l[8].join(' ')]; })};
     E.lista = linhas;
     return '<p class="nota">' + inteiro(linhas.length) + ' de ' + inteiro(todas.length) +
-      ' proposições. A <b>etapa</b> é a registrada na própria proposição; o resultado final é ' +
-      'o ato 11 do ledger, que esta lista não traz por linha.' +
+      ' proposições. A <b>etapa</b> é a fase em que a proposição está, como a própria ' +
+      'proposição registra. O resultado final (aprovada, rejeitada, arquivada) não aparece ' +
+      'nesta lista, linha a linha; o botão ao lado mostra os resultados.' +
       botaoDetalhe([11], 'Resultados obtidos') + '</p>' + paginar(linhas, function (corte) {
         return '<div class="lista">' + corte.map(function (l) {
           return '<button type="button" class="linha" data-prop="' + l[0] + '"><span class="sigla">' +
@@ -575,7 +595,7 @@
       '</li><li>Resultado final: publicado como ato 11 (“obteve resultado”), que esta lista ' +
       'não traz por linha</li><li>Regiões citadas: ' +
       (l[8].length ? esc(l[8].map(function (r) { return D.meta.regioes[r] || r; }).join('; ')) : 'nenhuma') +
-      '</li><li>Identificador na API da CLDF: ' + l[0] + '</li></ul>');
+      '</li><li>Número da proposição nos dados abertos da Câmara: ' + l[0] + '</li></ul>');
   }
 
   /* ---------- Emendas ---------- */
@@ -599,8 +619,8 @@
     return '<div class="kpis">' + kpi('Emendas', inteiro(linhas.length), 'de ' + inteiro(todas.length) + ' no período') +
       kpi('Valor somado', reais(t.v), 'valor em lei ou soma dos acréscimos') +
       kpi('Empenhado', reais(t.emp), 'de ' + reais(t.lei) + ' em lei (painel de emendas)') + '</div>' +
-      '<p class="nota">Função, subfunção e natureza aparecem como o código publicado; o ledger ' +
-      'não guarda rótulo para eles.</p>' +
+      '<p class="nota">Função, subfunção e natureza aparecem como o código publicado pela ' +
+      'fonte, sem o nome por extenso, que a fonte não traz.</p>' +
       paginar(linhas, function (corte) {
         return '<div class="lista">' + corte.map(function (l, k) {
           return '<button type="button" class="linha" data-emenda="' + (E.pagina * POR_PAGINA + k) +
@@ -791,22 +811,27 @@
   function fontes() {
     chips('', []);
     var h = '<h2>Os onze tipos de ato e de onde vêm</h2>' +
-      tabela(['Tipo', 'Ato', 'Fonte', 'Cobertura', 'Atos no ledger'], D.fontes.tipos_ato.map(function (t) {
+      tabela(['Tipo', 'Ato', 'Fonte', 'Cobertura', 'Atos registrados'], D.fontes.tipos_ato.map(function (t) {
         return [String(t.tipo_ato), t.nome, t.fonte, t.cobertura, t.atos]; }));
     h += '<h2>Os sistemas públicos lidos</h2><ul>' + D.fontes.registro.map(function (r) {
       return '<li>' + esc(r.descricao) + '<br><a rel="noopener noreferrer" href="' + esc(r.url) +
         '">' + esc(r.url) + '</a></li>'; }).join('') + '</ul>';
-    h += '<h2>Como ler esta página</h2><ul><li>Recorte: os ' + inteiro(D.meta.deputados) +
-      ' titulares e os anos 2023–2026. Atos de qualquer outro autor aparecem só no total do ledger.</li>' +
-      '<li>O painel de presença escreve “SESSAO ORDINARIA” até 2024 e “ORDINARIA” desde 2025; ' +
-      'aqui as duas grafias são lidas como o mesmo tipo.</li><li>Os arquivos em <code>dados/</code> ' +
-      'guardam só contagens e somas em centavos. Toda porcentagem é calculada nesta página, ao lado ' +
-      'dos dois números de que ela sai.</li><li>Os onze tipos de ato estão carregados. Cada ' +
-      'número desta página abre, no botão <b>Detalhes</b>, as linhas de ato que o compõem, com ' +
-      'a ligação para o artefato público de cada uma — a proposição, o documento ou a reunião ' +
-      'na API pública, ou o arquivo e o painel publicados. O painel de presença não expõe ' +
-      'endereço por registro, e essas linhas dizem “sem link público” em vez de um endereço ' +
-      'adivinhado.</li></ul>';
+    var nt = new Notas('fontes');
+    h += '<h2>Como ler esta página</h2><ul><li>Quem e quando: os ' + inteiro(D.meta.deputados) +
+      ' deputados titulares, de 2023 a 2026. Atos de outros autores entram só no total de ' +
+      'todos os atos registrados.</li>' +
+      '<li>Cada porcentagem aparece ao lado dos dois números de onde ela sai.' + nt.marca(
+        'Os arquivos em <code>dados/</code> guardam só contagens e somas em centavos. Toda ' +
+        'porcentagem é calculada nesta página, a partir do numerador e do denominador.') + '</li>' +
+      '<li>Os onze tipos de ato estão carregados. Cada número desta página abre, no botão ' +
+      '<b>Detalhes</b>, a lista dos atos que o formam, com o link para o registro público de ' +
+      'cada um.' + nt.marca(
+        'O link leva à proposição, ao documento ou à reunião na API pública da Câmara, ou ao ' +
+        'arquivo e ao painel publicados. O painel de presença não publica um endereço por ' +
+        'registro; essas linhas dizem “sem link público” em vez de um endereço adivinhado.') +
+      '</li><li>Sessões ordinárias são contadas juntas em todos os anos.' + nt.marca(
+        'O painel de presença escreve “SESSAO ORDINARIA” até 2024 e “ORDINARIA” desde 2025; ' +
+        'aqui as duas grafias são lidas como o mesmo tipo.') + '</li></ul>' + nt.html();
     E.exportavel = {nome: 'fontes', colunas: ['tipo_ato', 'nome', 'fonte', 'cobertura', 'atos'],
       linhas: D.fontes.tipos_ato.map(function (t) { return [t.tipo_ato, t.nome, t.fonte, t.cobertura, t.atos]; })};
     return h;
@@ -1163,15 +1188,16 @@
     abrirModal('<h3 id="modal-titulo">Nuvem de palavras</h3><p class="aviso">Carregando nuvem...</p>');
     ler('dados/nuvem/' + esc(sigla) + '-' + esc(ano) + '.json').then(function(dados) {
       if (!dados.palavras || !dados.palavras.length) {
-        $('modal-corpo').innerHTML = '<h3 id="modal-titulo">Nuvem de palavras</h3><p class="aviso">Nenhuma palavra encontrada para este recorte.</p>';
+        $('modal-corpo').innerHTML = '<h3 id="modal-titulo">Nuvem de palavras</h3><p class="aviso">Nenhuma palavra encontrada nesta seleção.</p>';
         return;
       }
       /* OS-167 — the list is in order of how CHARACTERISTIC a term is, not how frequent, so
          the size follows the position; the count stays beside it as the click's promise. */
       var total = dados.palavras.length;
+      var nt = new Notas('nuvem');
       var h = '<h3 id="modal-titulo">Nuvem de palavras</h3>' + 
-              '<p class="nota">' + inteiro(dados.n_proposicoes) + ' proposições no recorte ' + esc(sigla) + ' ' + esc(ano) + ', lidas em ' + inteiro(dados.n_textos) + ' textos. O número ao lado de cada palavra é o número de <b>proposições</b> que a trazem — clicar abre exatamente essas linhas.</p>' +
-              '<p class="nota">A nuvem mostra os termos <b>mais característicos</b> deste recorte — os que ele usa muito mais que as outras siglas do mesmo período —, não os mais frequentes. Textos idênticos (modelos copiados) contam uma vez só para essa ordem.</p>' +
+              '<p class="nota">' + inteiro(dados.n_proposicoes) + ' proposições de ' + esc(sigla) + ', ' + esc(ano) + '. O número ao lado de cada palavra diz quantas <b>proposições</b> a usam — um clique abre exatamente essas proposições.' + nt.marca('As ' + inteiro(dados.n_proposicoes) + ' proposições foram lidas em ' + inteiro(dados.n_textos) + ' textos.') + '</p>' +
+              '<p class="nota">As palavras maiores são as <b>mais típicas</b> deste tipo de proposição — as que ele usa muito mais que os outros tipos, no mesmo período —, não as mais repetidas.' + nt.marca('Textos idênticos (modelos copiados) contam uma vez só para essa ordem.') + '</p>' +
               '<div style="display: flex; gap: 10px; margin-bottom: 15px;">' +
               '<select id="nuvem-ano"><option value="todos"' + (ano === 'todos' ? ' selected' : '') + '>Todos os anos</option>' + 
               D.meta.anos_disponiveis.map(function(a) { return '<option value="' + a + '"' + (String(a) === ano ? ' selected' : '') + '>' + a + '</option>'; }).join('') + '</select>' +
@@ -1196,17 +1222,18 @@
 
       if (dados.excluidas && dados.excluidas.length) {
         h += '<p class="nota" style="margin-top: 15px;">' + inteiro(dados.excluidas.length) +
-          ' palavras de tramitação, de formulário e de justificativa foram excluídas deste recorte —' +
-          ' o quadro e o argumento da carta, não o seu assunto: ' + esc(dados.excluidas.join(', ')) + '.</p>';
+          ' palavras foram deixadas de fora porque falam do formulário ou do andamento, não do assunto.' +
+          nt.marca('As palavras de tramitação, de formulário e de justificativa excluídas — o quadro e ' +
+            'o argumento da carta, não o seu assunto: ' + esc(dados.excluidas.join(', ')) + '.') + '</p>';
       }
       
       if (dados.sem_texto) {
-        h += '<p class="nota" style="margin-top: 15px;">' + inteiro(dados.sem_texto) + ' documentos contam como "sem texto" neste recorte — PDFs só de imagem, ou cujo texto extraído é em boa parte caracteres ilegíveis — e não foram analisados.</p>';
+        h += '<p class="nota" style="margin-top: 15px;">' + inteiro(dados.sem_texto) + ' documentos não puderam ser lidos e ficaram de fora.' + nt.marca('Contam como "sem texto" os PDFs só de imagem e os documentos cujo texto extraído é em boa parte caracteres ilegíveis.') + '</p>';
       }
       if (sigla === 'IND') {
         h += '<div id="nuvem-lugares" style="margin-top: 20px;"><p class="aviso">Carregando lugares...</p></div>';
       }
-      $('modal-corpo').innerHTML = h;
+      $('modal-corpo').innerHTML = h + nt.html();
       if (sigla === 'IND') { desenharLugares(ano); }
       
       $('nuvem-ano').addEventListener('change', function(e) {
@@ -1230,7 +1257,7 @@
       var alvo = $('nuvem-lugares');
       if (!alvo) { return; }
       if (!dados.palavras || !dados.palavras.length) {
-        alvo.innerHTML = '<p class="aviso">Nenhuma Região Administrativa nomeada neste recorte.</p>';
+        alvo.innerHTML = '<p class="aviso">Nenhuma Região Administrativa citada nesta seleção.</p>';
         return;
       }
       var max = dados.palavras[0][1], min = dados.palavras[dados.palavras.length - 1][1];

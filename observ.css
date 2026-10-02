@@ -42,6 +42,10 @@ button:focus-visible,select:focus-visible,input:focus-visible,.linha:focus-visib
 main{padding:6px clamp(16px,4vw,40px) 40px;min-height:50vh}
 .aviso{color:var(--suave);padding:24px 0}
 .nota{color:var(--suave);font-size:13px;margin:8px 0 16px}
+.notas-titulo{font-size:14px;margin:24px 0 4px;color:var(--suave)}
+ol.notas{color:var(--suave);font-size:12.5px;margin:4px 0 16px;padding-left:22px}
+ol.notas li{margin:3px 0}
+sup a{text-decoration:none;font-weight:600;padding:0 1px}
 h2{font-size:17px;margin:26px 0 10px}
 .kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
 .kpi{background:var(--cartao);border:1px solid var(--linha);border-radius:var(--raio);
